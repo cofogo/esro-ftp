@@ -1,0 +1,22 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "db/queries"
+    database:
+      uri: "postgres://user:secret@localhost:5432/dashboard-main?sslmode=disable"
+    gen:
+      go:
+        package: "sqlc"
+        out: "db/sqlc"
+        emit_json_tags: true
+        overrides:
+          - db_type: "text"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v6"
+              type: "String"
+          - db_type: "integer"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v6"
+              type: "Int"
