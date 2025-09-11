@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "s3_bucket_name" {
   description = "Name of the S3 bucket to store generated manifests"
   type        = string
-  default     = "sympany-clothing-data"
+  default     = "esro-ftp"
 }
 
 variable "private_subnets" {
