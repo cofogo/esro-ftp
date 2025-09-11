@@ -68,7 +68,6 @@ resource "aws_secretsmanager_secret_version" "s3_config" {
   secret_id = aws_secretsmanager_secret.s3_config.id
   secret_string = jsonencode({
     bucket_name = var.s3_bucket_name
-    bucket_path = var.s3_bucket_path
   })
 }
 

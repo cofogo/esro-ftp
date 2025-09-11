@@ -10,13 +10,6 @@ variable "s3_bucket_name" {
   default     = "sympany-clothing-data"
 }
 
-variable "s3_bucket_path" {
-  description = "Path prefix within the S3 bucket for storing manifests"
-  type        = string
-  default     = "manifests"
-  sensitive   = true
-}
-
 variable "private_subnets" {
   description = "Private subnet IDs where the Lambda will run"
   type        = list(string)

@@ -49,11 +49,6 @@ resource "aws_lambda_function" "s3_upload_trigger" {
     }
   }
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
-  }
-
   depends_on = [
     aws_cloudwatch_log_group.lambda_logs,
   ]
