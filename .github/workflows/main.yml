@@ -1,4 +1,4 @@
-name: Deploy Dataset Manifest Generator
+name: Deploy S3 Upload Trigger
 
 on:
   push:
@@ -96,11 +96,11 @@ jobs:
           ECR_URI="${ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest"
           echo "Updating Lambda to image: $ECR_URI"
           aws lambda update-function-code \
-            --function-name dataset-manifest-generator \
+            --function-name s3-upload-trigger \
             --image-uri "$ECR_URI" \
             --region ${{ env.AWS_REGION }}
 
           echo "Waiting for Lambda update to complete..."
           aws lambda wait function-updated \
-            --function-name dataset-manifest-generator \
+            --function-name s3-upload-trigger \
             --region ${{ env.AWS_REGION }}
