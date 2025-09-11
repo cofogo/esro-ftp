@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: eu-central-1
-  ECR_REPOSITORY: dataset-manifest-generator
+  ECR_REPOSITORY: s3_upload_trigger
 
 permissions:
   contents: read
