@@ -19,5 +19,3 @@ variable "lambda_security_group_id" {
   description = "Security group ID to attach to the Lambda ENIs"
   type        = string
 }
-
-
