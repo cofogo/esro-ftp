@@ -10,7 +10,7 @@ terraform {
   cloud {
     organization = "Code-for-Good"
     workspaces {
-      name = "s3-upload-trigger"
+      name = "esro-ftp-upload-trigger"
     }
   }
 }
