@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: eu-central-1
-  ECR_REPOSITORY: s3_upload_trigger
+  ECR_REPOSITORY: s3-upload-trigger
 
 permissions:
   contents: read
