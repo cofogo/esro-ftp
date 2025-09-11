@@ -1,7 +1,5 @@
-# IAM Role for Step Function
 resource "aws_iam_role" "step_function_role" {
-  name = "dataset-manifest-generator-step-function-role"
-
+  name = "s3-upload-trigger-step-function-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -14,18 +12,15 @@ resource "aws_iam_role" "step_function_role" {
       }
     ]
   })
-
   tags = {
-    Name        = "dataset-manifest-generator-step-function-role"
+    Name        = "s3-upload-trigger-step-function-role"
     Environment = "production"
   }
 }
 
-# Policy for Step Function to invoke Lambda
 resource "aws_iam_policy" "step_function_lambda_policy" {
-  name        = "dataset-manifest-generator-step-function-policy"
+  name        = "s3-upload-trigger-step-function-policy"
   description = "Policy for Step Function to invoke Lambda"
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -45,11 +40,9 @@ resource "aws_iam_role_policy_attachment" "step_function_lambda_policy" {
   policy_arn = aws_iam_policy.step_function_lambda_policy.arn
 }
 
-# Step Function State Machine
-resource "aws_sfn_state_machine" "dataset_manifest_generator" {
-  name     = "dataset-manifest-generator"
+resource "aws_sfn_state_machine" "s3_upload_trigger" {
+  name     = "s3-upload-trigger"
   role_arn = aws_iam_role.step_function_role.arn
-
   definition = jsonencode({
     Comment = "Generate dataset manifests monthly"
     StartAt = "GenerateManifests"
@@ -79,9 +72,8 @@ resource "aws_sfn_state_machine" "dataset_manifest_generator" {
       }
     }
   })
-
   tags = {
-    Name        = "dataset-manifest-generator"
+    Name        = "s3-upload-trigger"
     Environment = "production"
   }
 }

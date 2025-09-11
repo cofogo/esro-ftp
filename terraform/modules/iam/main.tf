@@ -1,7 +1,5 @@
-# IAM Role for Lambda execution
 resource "aws_iam_role" "lambda_execution_role" {
-  name = "dataset-manifest-generator-lambda-role"
-
+  name = "s3-upload-trigger-lambda-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -14,9 +12,8 @@ resource "aws_iam_role" "lambda_execution_role" {
       }
     ]
   })
-
   tags = {
-    Name        = "dataset-manifest-generator-lambda-role"
+    Name        = "s3-upload-trigger-lambda-role"
     Environment = "production"
   }
 }
@@ -27,11 +24,9 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Policy for accessing Secrets Manager and SSM Parameters
 resource "aws_iam_policy" "lambda_secrets_policy" {
-  name        = "dataset-manifest-generator-secrets-policy"
-  description = "Policy for Lambda to access Secrets Manager and SSM Parameters"
-
+  name        = "s3-upload-trigger-secrets-policy"
+  description = "Policy for Lambda to access Secrets Manager"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -41,17 +36,7 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:*:secret:dataset-manifest-generator/s3-*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters"
-        ]
-        Resource = [
-          "arn:aws:ssm:${var.aws_region}:*:parameter/sympany/*"
+          "arn:aws:secretsmanager:${var.aws_region}:*:secret:s3-upload-trigger/s3-*"
         ]
       }
     ]
@@ -63,11 +48,9 @@ resource "aws_iam_role_policy_attachment" "lambda_secrets_policy" {
   policy_arn = aws_iam_policy.lambda_secrets_policy.arn
 }
 
-# Policy for accessing S3
 resource "aws_iam_policy" "lambda_s3_policy" {
-  name        = "dataset-manifest-generator-s3-policy"
+  name        = "s3-upload-trigger-s3-policy"
   description = "Policy for Lambda to access S3"
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

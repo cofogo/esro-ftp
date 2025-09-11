@@ -1,0 +1,33 @@
+name: Terraform Plan
+
+description: |-
+  Initialize Terraform, run plan, and upload plan artifact.
+
+inputs:
+  TF_API_TOKEN:
+    description: "Terraform Cloud API token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ inputs.TF_API_TOKEN }}
+
+    - name: Terraform Init & Plan
+      shell: bash
+      run: |
+        cd terraform
+        terraform init
+        terraform plan -out=tfplan.binary
+
+    - name: Upload Terraform Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: terraform/tfplan.binary

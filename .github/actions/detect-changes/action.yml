@@ -1,0 +1,38 @@
+name: Detect Changed Areas
+
+description: |-
+  Check which parts of the repo have changed (Terraform vs CLI).
+
+inputs: {}
+
+outputs:
+  terraform:
+    description: "true if terraform/** changed or commit has RA:"
+    value: ${{ steps.check-commit.outputs.force-all == 'true' || steps.filter.outputs.terraform }}
+  cli:
+    description: "true if any non-terraform files changed or commit has RA:"
+    value: ${{ steps.check-commit.outputs.force-all == 'true' || steps.filter.outputs.cli }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check for RA in commit message
+      id: check-commit
+      shell: bash
+      run: |
+        if [[ "${{ github.event.head_commit.message }}" == *"--RA"* ]]; then
+          echo "force-all=true" >> $GITHUB_OUTPUT
+        else
+          echo "force-all=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Detect changed areas
+      id: filter
+      uses: dorny/paths-filter@v3
+      with:
+        predicate-quantifier: "every"
+        filters: |
+          terraform:
+            - 'terraform/**'
+          cli:
+            - '**'
+            - '!terraform/**'

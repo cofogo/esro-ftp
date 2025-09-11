@@ -1,0 +1,33 @@
+name: Terraform Apply
+
+description: |-
+  Download plan artifact and apply Terraform changes.
+
+inputs:
+  TF_API_TOKEN:
+    description: "Terraform Cloud API token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Download Terraform Plan
+      uses: actions/download-artifact@v4
+      with:
+        name: tfplan
+        path: terraform
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ inputs.TF_API_TOKEN }}
+
+    - name: Terraform Init & Apply
+      shell: bash
+      run: |
+        cd terraform
+        terraform init
+        terraform apply -auto-approve tfplan.binary

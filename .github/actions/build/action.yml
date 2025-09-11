@@ -1,0 +1,65 @@
+name: Build application
+
+description: |-
+  Build and push Docker image to ECR
+
+inputs:
+  aws-access-key-id:
+    description: "AWS access key ID"
+    required: true
+  aws-secret-access-key:
+    description: "AWS secret access key"
+    required: true
+  aws-region:
+    description: "AWS region"
+    required: false
+    default: "eu-central-1"
+  ecr-repository:
+    description: "ECR repository name"
+    required: true
+    default: "dataset-manifest-generator"
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Print Runner Info
+      shell: bash
+      run: |
+        echo "Runner Name: $RUNNER_NAME"
+        echo "Runner OS: $RUNNER_OS"
+        echo "Agent Version: $AGENT_VERSION"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push Docker image
+      shell: bash
+      run: |
+        SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
+        ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG=${SHORT_SHA}
+        IMAGE_URI="${ECR_REGISTRY}/${{ inputs.ecr-repository }}:${IMAGE_TAG}"
+        LATEST_URI="${ECR_REGISTRY}/${{ inputs.ecr-repository }}:latest"
+        
+        echo "Building image: $IMAGE_URI"
+        docker build -t $IMAGE_URI .
+        docker tag $IMAGE_URI $LATEST_URI
+        
+        echo "Pushing images..."
+        docker push $IMAGE_URI
+        docker push $LATEST_URI
+        
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
+        echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+

@@ -18,9 +18,9 @@ output "step_function_arn" {
   value       = module.step_function.state_machine_arn
 }
 
-output "eventbridge_rule_name" {
-  description = "Name of the EventBridge rule for monthly execution"
-  value       = aws_cloudwatch_event_rule.monthly_trigger.name
+output "cloudwatch_event_rule_name" {
+  description = "Name of the CloudWatch EventBridge rule for S3 upload trigger"
+  value       = module.cloudwatch.cloudwatch_event_rule_name
 }
 
 output "s3_secret_arn" {

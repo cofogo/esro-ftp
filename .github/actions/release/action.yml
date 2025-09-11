@@ -1,0 +1,45 @@
+name: Semantic Release
+
+description: |-
+  Run python-semantic-release to calculate and optionally publish a new version.
+
+inputs:
+  dry_run:
+    description: |-
+      If true, only simulate the release without committing, tagging, or publishing.
+    required: false
+    default: 'false'
+  github-token:
+    description: "GitHub token for authentication"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Full History
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run Semantic Release
+      id: semrel
+      uses: python-semantic-release/python-semantic-release@v10.2.0
+      with:
+        github_token: ${{ inputs.github-token }}
+        root_options: ${{ inputs.dry_run == 'true' && '--noop' || '' }}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+
+outputs:
+  next_version:
+    description: "The calculated version"
+    value: ${{ steps.semrel.outputs.version }}
+  release_required:
+    description: "Indicates whether a release was published"
+    value: ${{ steps.semrel.outputs.released }}
+  release_tag:
+    description: "The git tag created"
+    value: ${{ steps.semrel.outputs.tag }}
+  is_prerelease:
+    description: "Indicates a prerelease"
+    value: ${{ steps.semrel.outputs.is_prerelease }}
