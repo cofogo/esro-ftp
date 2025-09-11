@@ -5,9 +5,11 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
 {
   "source": ["aws.s3"],
   "detail-type": ["Object Created"],
-  "resources": [
-    "arn:aws:s3:::${var.s3_bucket_name}"
-  ]
+  "detail": {
+    "bucket": {
+      "name": ["${var.s3_bucket_name}"]
+    }
+  }
 }
 EOF
 
@@ -15,6 +17,12 @@ EOF
     Name        = "s3-upload-trigger"
     Environment = "production"
   }
+}
+
+# S3 bucket notification configuration to send events to EventBridge
+resource "aws_s3_bucket_notification" "s3_upload_notification" {
+  bucket      = var.s3_bucket_name
+  eventbridge = true
 }
 
 resource "aws_cloudwatch_event_target" "step_function_target" {
