@@ -75,11 +75,11 @@ sleep 8
 # --- Ensure host dir ownership matches container's ftpuser:ftpgroup ----------
 FTP_UID=$(docker exec ftp-server id -u ftpuser)
 FTP_GID=$(docker exec ftp-server id -g ftpuser)
-echo "Container ftpuser uid/gid: ${FTP_UID}/${FTP_GID}" >> /var/log/ftp-setup.log
+echo "Container ftpuser uid/gid: $${FTP_UID}/$${FTP_GID}" >> /var/log/ftp-setup.log
 
 # Create the user home dir on host (owned by container's ftp user/group)
 mkdir -p "/opt/ftp/data/${ftp_username}"
-chown -R "${FTP_UID}:${FTP_GID}" "/opt/ftp/data"
+chown -R "$${FTP_UID}:$${FTP_GID}" "/opt/ftp/data"
 
 # --- Create/refresh pure-pw user inside container ----------------------------
 # Use names (ftpuser/ftpgroup) instead of hardcoded numeric IDs to avoid mismatch
