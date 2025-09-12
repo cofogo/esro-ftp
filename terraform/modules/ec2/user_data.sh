@@ -38,7 +38,7 @@ docker rm -f s3-ftp >/dev/null 2>&1 || true
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
-  -v /home/ftpusers:/home/ftpusers \
+  -v /home/ftpusers:/ftp \
   -p 21:21 \
   -p 21000-21010:21000-21010 \
   -e USERS="${ftp_username}|${ftp_password}" \
