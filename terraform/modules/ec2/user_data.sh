@@ -75,17 +75,6 @@ docker run -d \
               exec /run.sh -p 50000:50050 -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo localhost)"
 
 
-# --- TLS Support (Optional) ---------------------------------------------------
-# To enable TLS, uncomment these lines:
-# mkdir -p /etc/ssl/private
-# openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-#   -keyout /etc/ssl/private/pure-ftpd.pem \
-#   -out /etc/ssl/private/pure-ftpd.pem \
-#   -subj "/CN=${}"
-# chmod 600 /etc/ssl/private/pure-ftpd.pem
-# Add to docker run:  -e "TLS=2" -v /etc/ssl/private:/etc/ssl/private:ro
-
-# --- Diagnostics --------------------------------------------------------------
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
