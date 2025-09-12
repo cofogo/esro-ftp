@@ -23,10 +23,10 @@ mkdir -p /opt/ftp/data
 mkdir -p /opt/ftp/config
 mkdir -p /opt/ftp/ssl
 
-# --- Debug: variables ---------------------------------------------------------
+# --- Debug: variables (these 4 are Terraform-substituted) --------------------
 echo "[$(date -Is)] FTP Username: ${ftp_username}"   >> /var/log/ftp-setup.log
 echo "[$(date -Is)] S3 Bucket:    ${s3_bucket_name}" >> /var/log/ftp-setup.log
-echo "[$(date -Is)] AWS Region:    ${aws_region}"     >> /var/log/ftp-setup.log
+echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 
 # --- TLS certificate (PEM expected by pure-ftpd) ------------------------------
 CRT=/opt/ftp/ssl/pure-ftpd.crt
@@ -62,8 +62,8 @@ docker run -d \
   -v /opt/ftp/data:/home/ftpusers \
   -v /opt/ftp/ssl/pure-ftpd.pem:/etc/ssl/private/pure-ftpd.pem \
   -e TLS=2 \
-  -e PUBLICHOST="${PUBLIC_IP}" \
-  -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P ${PUBLIC_IP} -p 30000:30009 -Y 2" \
+  -e PUBLICHOST="$${PUBLIC_IP}" \
+  -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P $${PUBLIC_IP} -p 30000:30009 -Y 2" \
   stilliard/pure-ftpd:hardened
 
 # --- Wait a moment for daemon to come up -------------------------------------
@@ -72,14 +72,13 @@ sleep 8
 # --- Ensure host dir ownership matches container's ftpuser:ftpgroup ----------
 FTP_UID=$(docker exec ftp-server id -u ftpuser)
 FTP_GID=$(docker exec ftp-server id -g ftpuser)
-echo "Container ftpuser uid/gid: ${FTP_UID}/${FTP_GID}" >> /var/log/ftp-setup.log
+echo "Container ftpuser uid/gid: $${FTP_UID}/$${FTP_GID}" >> /var/log/ftp-setup.log
 
 # Create the user home dir on host (owned by container's ftp user/group)
 mkdir -p "/opt/ftp/data/${ftp_username}"
-chown -R "${FTP_UID}:${FTP_GID}" "/opt/ftp/data"
+chown -R "$${FTP_UID}:$${FTP_GID}" "/opt/ftp/data"
 
 # --- Create/refresh pure-pw user inside container ----------------------------
-# Use names (ftpuser/ftpgroup) instead of hardcoded numeric IDs to avoid mismatch
 echo "Setting up FTP user ${ftp_username}..." >> /var/log/ftp-setup.log
 
 # If the user already exists, remove it first to ensure password/home are correct
@@ -106,7 +105,7 @@ AWS_REGION="${aws_region}"
 
 inotifywait -m -r -e create,moved_to "$WATCH_DIR" --format '%w%f' | while read -r FILE; do
   echo "[$(date -Is)] New file detected: $FILE"
-  RELATIVE_PATH="${FILE#${WATCH_DIR}/}"
+  RELATIVE_PATH=$${FILE#"$WATCH_DIR"/}
   echo "[$(date -Is)] Syncing $RELATIVE_PATH to s3://$S3_BUCKET/$RELATIVE_PATH ..."
   if aws s3 cp "$FILE" "s3://$S3_BUCKET/$RELATIVE_PATH" --region "$AWS_REGION"; then
     echo "[$(date -Is)] Successfully uploaded $RELATIVE_PATH"
