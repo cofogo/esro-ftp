@@ -112,7 +112,6 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# User data script to setup FTP server
 locals {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     ftp_username          = var.ftp_username
@@ -124,7 +123,6 @@ locals {
   }))
 }
 
-# EC2 Instance
 resource "aws_instance" "ftp_server" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = var.instance_type
@@ -145,5 +143,9 @@ resource "aws_instance" "ftp_server" {
   tags = {
     Name        = "ftp-server"
     Environment = "production"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
