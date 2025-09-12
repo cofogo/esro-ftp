@@ -16,7 +16,7 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
   }
 }
 EOF
-
+ 
   tags = {
     Name        = "s3-upload-trigger"
     Environment = "production"
