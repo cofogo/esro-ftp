@@ -70,9 +70,9 @@ docker run -d \
   -p 21:21 \
   -p 50000-50050:50000-50050 \
   stilliard/pure-ftpd:hardened \
-  /bin/sh -c "pure-pw useradd ${ftp_username} -u ftpuser -d /home/ftpusers/data && \
+  /bin/sh -c "echo -e \"${ftp_password}\n${ftp_password}\" | pure-pw useradd ${ftp_username} -u ftpuser -d /home/ftpusers/data && \
               pure-pw mkdb && \
-              exec /run.sh -p 50000:50050 -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo localhost)"
+              exec /run.sh -p 50000:50050 -P \$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo localhost)"
 
 
 sleep 10
