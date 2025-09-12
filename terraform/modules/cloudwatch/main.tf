@@ -4,10 +4,15 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
   event_pattern = <<EOF
 {
   "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
   "detail": {
     "bucket": {
       "name": ["${var.s3_bucket_name}"]
-    }
+    },
+    "eventSource": ["aws:s3"],
+    "eventName": [
+      "PutObject",
+    ]
   }
 }
 EOF
