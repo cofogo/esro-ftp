@@ -81,7 +81,7 @@ docker run -d \
 # openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 #   -keyout /etc/ssl/private/pure-ftpd.pem \
 #   -out /etc/ssl/private/pure-ftpd.pem \
-#   -subj "/CN=${PUBLIC_IP}"
+#   -subj "/CN=${}"
 # chmod 600 /etc/ssl/private/pure-ftpd.pem
 # Add to docker run:  -e "TLS=2" -v /etc/ssl/private:/etc/ssl/private:ro
 
