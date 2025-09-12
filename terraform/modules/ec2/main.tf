@@ -87,6 +87,32 @@ resource "aws_iam_role_policy_attachment" "ftp_server_s3_policy" {
   policy_arn = aws_iam_policy.ftp_server_s3_policy.arn
 }
 
+# EC2 Instance
+resource "aws_instance" "ftp_server" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [aws_security_group.ftp_server.id]
+  subnet_id              = var.subnet_id
+  iam_instance_profile   = aws_iam_instance_profile.ftp_server_profile.name
+
+  user_data = local.user_data
+
+  # Force recreation when user_data changes
+  user_data_replace_on_change = true
+
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 20
+    encrypted   = true
+  }
+
+  tags = {
+    Name        = "ftp-server"
+    Environment = "production"
+  }
+}
+
+
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "ftp_server_profile" {
   name = "ftp-server-instance-profile"
@@ -113,30 +139,7 @@ locals {
     aws_region            = var.aws_region
     aws_access_key_id     = var.aws_access_key_id
     aws_secret_access_key = var.aws_secret_access_key
+    public_ip             = aws_instance.ftp_server.public_ip
   }))
 }
 
-# EC2 Instance
-resource "aws_instance" "ftp_server" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.ftp_server.id]
-  subnet_id              = var.subnet_id
-  iam_instance_profile   = aws_iam_instance_profile.ftp_server_profile.name
-
-  user_data = local.user_data
-
-  # Force recreation when user_data changes
-  user_data_replace_on_change = true
-
-  root_block_device {
-    volume_type = "gp3"
-    volume_size = 20
-    encrypted   = true
-  }
-
-  tags = {
-    Name        = "ftp-server"
-    Environment = "production"
-  }
-}
