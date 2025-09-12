@@ -63,6 +63,8 @@ pkill -f vsftpd >/dev/null 2>&1 || true
 echo "Starting FTP server container with S3 mount..." >> /var/log/ftp-setup.log
 docker rm -f s3-ftp >/dev/null 2>&1 || true
 
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo "localhost")
+
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
@@ -72,7 +74,7 @@ docker run -d \
   stilliard/pure-ftpd:hardened \
   /bin/sh -c "pure-pw useradd ${ftp_username} -u ftpuser -d /home/ftpusers/data && \
               pure-pw mkdb && \
-              exec /run.sh -p 50000:50050 -P ${public_ip}"
+              exec /run.sh -p 50000:50050 -P ${PUBLIC_IP}"
 
 # --- TLS Support (Optional) ---------------------------------------------------
 # To enable TLS, uncomment these lines:
