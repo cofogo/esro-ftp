@@ -135,7 +135,7 @@ resource "aws_instance" "ftp_server" {
 
   root_block_device {
     volume_type           = "gp3"
-    volume_size           = 20
+    volume_size           = 10
     encrypted             = true
     delete_on_termination = true
   }

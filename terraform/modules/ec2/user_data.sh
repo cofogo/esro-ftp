@@ -66,15 +66,15 @@ docker rm -f s3-ftp >/dev/null 2>&1 || true
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
-  -v /mnt/s3:/home/ftpusers/data \
+  -v /home/ftpusers:/home/ftpusers \
+  -v /mnt/s3:/home/ftpusers/${ftp_username}/data \
   -p 21:21 \
   -p 50000-50050:50000-50050 \
   -e FTP_USER_NAME=${ftp_username} \
   -e FTP_USER_PASS=${ftp_password} \
-  -e FTP_USER_HOME=/home/ftpusers/data \
+  -e FTP_USER_HOME=/home/ftpusers/${ftp_username} \
   stilliard/pure-ftpd:hardened \
   /run.sh -p 50000:50050 -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
