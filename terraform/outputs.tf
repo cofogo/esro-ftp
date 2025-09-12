@@ -35,22 +35,22 @@ output "s3_secret_name" {
 }
 
 # FTP Server outputs
-output "ftp_server_instance_id" {
-  description = "ID of the FTP server EC2 instance"
-  value       = module.ec2.instance_id
-}
+# output "ftp_server_instance_id" {
+#   description = "ID of the FTP server EC2 instance"
+#   value       = module.ec2.instance_id
+# }
 
-output "ftp_server_public_ip" {
-  description = "Public IP address of the FTP server"
-  value       = module.ec2.public_ip
-}
+# output "ftp_server_public_ip" {
+#   description = "Public IP address of the FTP server"
+#   value       = module.ec2.public_ip
+# }
 
-output "ftp_endpoint" {
-  description = "FTP server endpoint"
-  value       = module.ec2.ftp_endpoint
-}
+# output "ftp_endpoint" {
+#   description = "FTP server endpoint"
+#   value       = module.ec2.ftp_endpoint
+# }
 
-output "ftp_ssh_command" {
-  description = "SSH command to connect to the FTP server"
-  value       = module.ec2.ssh_command
-}
+# output "ftp_ssh_command" {
+#   description = "SSH command to connect to the FTP server"
+#   value       = module.ec2.ssh_command
+# }
