@@ -72,7 +72,9 @@ docker run -d \
   -e FTP_USER_NAME=${ftp_username} \
   -e FTP_USER_PASS=${ftp_password} \
   -e FTP_USER_HOME=/home/ftpusers/data \
-  stilliard/pure-ftpd:hardened
+  stilliard/pure-ftpd:hardened \
+  /run.sh -p 50000:50050 -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
