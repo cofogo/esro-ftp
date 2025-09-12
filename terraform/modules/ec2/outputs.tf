@@ -1,7 +1,7 @@
-output "instance_id" {
-  description = "ID of the FTP server EC2 instance"
-  value       = aws_instance.ftp_server.id
-}
+# output "instance_id" {
+#   description = "ID of the FTP server EC2 instance"
+#   value       = aws_instance.ftp_server.id
+# }
 
 output "public_ip" {
   description = "Public IP address of the FTP server"
