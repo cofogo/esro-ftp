@@ -21,34 +21,19 @@ fi
 # --- Directories --------------------------------------------------------------
 mkdir -p /opt/ftp/data
 mkdir -p /opt/ftp/config
-mkdir -p /opt/ftp/ssl
 
 # --- Debug: variables ---------------------------------------------------------
 echo "[$(date -Is)] FTP Username: ${ftp_username}"   >> /var/log/ftp-setup.log
 echo "[$(date -Is)] S3 Bucket:    ${s3_bucket_name}" >> /var/log/ftp-setup.log
 echo "[$(date -Is)] AWS Region:    ${aws_region}"     >> /var/log/ftp-setup.log
 
-# --- TLS certificate (PEM expected by pure-ftpd) ------------------------------
-CRT=/opt/ftp/ssl/pure-ftpd.crt
-KEY=/opt/ftp/ssl/pure-ftpd.key
-PEM=/opt/ftp/ssl/pure-ftpd.pem
-
-if [ ! -s "$CRT" ] || [ ! -s "$KEY" ]; then
-  echo "Generating self-signed cert..."
-  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout "$KEY" \
-    -out "$CRT" \
-    -subj "/C=US/ST=State/L=City/O=Organization/CN=ftp-server"
-fi
-
-cat "$KEY" "$CRT" > "$PEM"
-chmod 600 "$PEM"
-chmod 600 "$KEY"
-chmod 644 "$CRT"
-
 # --- Start/replace Pure-FTPd container ---------------------------------------
 echo "Starting Pure-FTPd container..." >> /var/log/ftp-setup.log
-PUBLIC_IP=$(curl -fsS http://169.254.169.254/latest/meta-data/public-ipv4 || echo "0.0.0.0")
+# Get public IP using IMDSv2 (token-based approach)
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -fsS http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "0.0.0.0")
+
+echo "Using Public IP: $PUBLIC_IP" >> /var/log/ftp-setup.log
 
 # Remove old container if present
 docker rm -f ftp-server >/dev/null 2>&1 || true
@@ -57,16 +42,10 @@ docker run -d \
   --name ftp-server \
   --restart unless-stopped \
   -p 21:21 \
-  -p 990:990 \
   -p 30000-30009:30000-30009 \
   -v /opt/ftp/data:/home/ftpusers \
-  -v /opt/ftp/ssl/pure-ftpd.pem:/etc/ssl/private/pure-ftpd.pem \
-  -e TLS=1 \
-  -e TLS_CN="localhost" \
-  -e TLS_ORG="FTP Server" \
-  -e TLS_C="US" \
   -e PUBLICHOST="$PUBLIC_IP" \
-  -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P $PUBLIC_IP -p 30000:30009 -Y 1" \
+  -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P $PUBLIC_IP -p 30000:30009" \
   stilliard/pure-ftpd:hardened
 
 # --- Wait a moment for daemon to come up -------------------------------------
@@ -107,9 +86,6 @@ docker exec ftp-server pure-pw show "${ftp_username}" >> /var/log/ftp-setup.log 
 
 echo "Listing all users..." >> /var/log/ftp-setup.log
 docker exec ftp-server pure-pw list >> /var/log/ftp-setup.log 2>&1
-
-# --- Sanity: ensure Pure-FTPd actually picked up TLS -------------------------
-docker logs --since 1m ftp-server | egrep -i 'TLS|pem|cert' || true
 
 # --- S3 Sync: watcher script --------------------------------------------------
 cat > /opt/ftp/sync-to-s3.sh << 'SYNC_SCRIPT_EOF'
@@ -168,8 +144,4 @@ echo "FTP user list:"              | tee -a /var/log/ftp-setup.log
 docker exec ftp-server pure-pw list | tee -a /var/log/ftp-setup.log 2>&1
 echo "Container logs (last 20 lines):" | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 ftp-server | tee -a /var/log/ftp-setup.log
-echo "TLS Certificate info:" | tee -a /var/log/ftp-setup.log
-ls -la /opt/ftp/ssl/ | tee -a /var/log/ftp-setup.log
-echo "Done."
-docker exec ftp-server pure-pw list | tee -a /var/log/ftp-setup.log
 echo "Done."
