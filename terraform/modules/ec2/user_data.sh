@@ -73,8 +73,7 @@ docker run -d \
   /bin/sh -c "echo -e \"${ftp_password}\n${ftp_password}\" | pure-pw useradd ${ftp_username} -u ftpuser -d /home/ftpusers/data && \
               pure-pw mkdb && \
               exec /run.sh -p 50000:50050 -P \$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo localhost)"
-
-
+              
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
