@@ -53,9 +53,9 @@ docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
 cat >/usr/local/bin/s3-sync.sh <<'EOF'
 #!/bin/bash
 while true; do
-  aws s3 sync /home/ftpusers/${ftp_username} s3://${s3_bucket_name}/ \
+  aws s3 sync /ftp/ftpuser/${ftp_username} s3://${s3_bucket_name}/ \
     --region ${aws_region} --exact-timestamps
-  find /home/ftpusers/${ftp_username} -type f -delete
+  find /ftp/ftpuser/${ftp_username} -type f -delete
   sleep 10
 done
 EOF
