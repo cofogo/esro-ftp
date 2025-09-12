@@ -22,9 +22,15 @@ echo "Starting S3-backed FTP container..." >> /var/log/ftp-setup.log
 # Remove old container if present
 docker rm -f s3-ftp >/dev/null 2>&1 || true
 
-# Stop any conflicting FTP services
+# Stop and remove any conflicting FTP services completely
 systemctl stop vsftpd >/dev/null 2>&1 || true
 systemctl disable vsftpd >/dev/null 2>&1 || true
+yum remove -y vsftpd >/dev/null 2>&1 || true
+pkill -f vsftpd >/dev/null 2>&1 || true
+
+# Check what's running on port 21 before starting
+echo "Checking port 21 before starting container:" >> /var/log/ftp-setup.log
+netstat -tulpn | grep :21 >> /var/log/ftp-setup.log 2>&1 || echo "Port 21 is free" >> /var/log/ftp-setup.log
 
 # Run the S3-backed FTP server (uses IAM role credentials automatically)
 docker run -d \
@@ -36,6 +42,10 @@ docker run -d \
   -e FTP_PASS="${ftp_password}" \
   -p 21:21 \
   factual/s3-backed-ftp
+
+echo "Container started, checking port 21 again:" >> /var/log/ftp-setup.log
+sleep 5
+netstat -tulpn | grep :21 >> /var/log/ftp-setup.log 2>&1 || echo "Port 21 not found" >> /var/log/ftp-setup.log
 
 echo "S3-backed FTP server started successfully!" >> /var/log/ftp-setup.log
 
