@@ -70,4 +70,17 @@ echo "Container status:"           | tee -a /var/log/ftp-setup.log
 docker ps                          | tee -a /var/log/ftp-setup.log
 echo "Container logs (last 20 lines):" | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
+
+# Check if s3-fuse is failing and get detailed error
+echo "Checking s3-fuse specific logs:" | tee -a /var/log/ftp-setup.log
+docker exec s3-ftp cat /var/log/s3fs.log 2>/dev/null | tee -a /var/log/ftp-setup.log || echo "No s3fs.log found" | tee -a /var/log/ftp-setup.log
+
+# Check if the S3 bucket exists and is accessible
+echo "Testing S3 bucket access:" | tee -a /var/log/ftp-setup.log
+docker exec s3-ftp aws s3 ls s3://${s3_bucket_name}/ 2>&1 | tee -a /var/log/ftp-setup.log || echo "S3 bucket access failed" | tee -a /var/log/ftp-setup.log
+
+# Check AWS credentials inside container
+echo "Checking AWS credentials:" | tee -a /var/log/ftp-setup.log
+docker exec s3-ftp env | grep AWS | tee -a /var/log/ftp-setup.log
+
 echo "Done."
