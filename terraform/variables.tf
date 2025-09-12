@@ -19,3 +19,39 @@ variable "lambda_security_group_id" {
   description = "Security group ID to attach to the Lambda ENIs"
   type        = string
 }
+
+# VPC and Network variables
+variable "vpc_id" {
+  description = "VPC ID where resources will be created"
+  type        = string
+}
+
+variable "public_subnet_id" {
+  description = "Public subnet ID where the FTP server will be created"
+  type        = string
+}
+
+# FTP Server variables
+variable "ftp_instance_type" {
+  description = "EC2 instance type for FTP server"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "ftp_username" {
+  description = "FTP server username"
+  type        = string
+  default     = "ftpuser"
+}
+
+variable "ftp_password" {
+  description = "FTP server password"
+  type        = string
+  sensitive   = true
+}
+
+variable "ftp_allowed_cidr_blocks" {
+  description = "CIDR blocks allowed to access FTP server"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
