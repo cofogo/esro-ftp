@@ -14,6 +14,17 @@ unzip awscliv2.zip
 # Create directories for FTP server
 mkdir -p /opt/ftp/data
 mkdir -p /opt/ftp/config
+mkdir -p /opt/ftp/ssl
+
+# Generate self-signed SSL certificate for FTPS
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /opt/ftp/ssl/pure-ftpd.key \
+    -out /opt/ftp/ssl/pure-ftpd.crt \
+    -subj "/C=US/ST=State/L=City/O=Organization/CN=ftp-server"
+
+# Set proper permissions for SSL files
+chmod 600 /opt/ftp/ssl/pure-ftpd.key
+chmod 644 /opt/ftp/ssl/pure-ftpd.crt
 
 # Create FTP user configuration
 cat > /opt/ftp/config/users.conf << EOF
@@ -66,7 +77,7 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# Run FTP server container
+# Run FTP server container with SSL/TLS support
 docker run -d \
   --name ftp-server \
   --restart unless-stopped \
@@ -74,8 +85,11 @@ docker run -d \
   -p 30000-30009:30000-30009 \
   -v /opt/ftp/data:/ftp \
   -v /opt/ftp/config/users.conf:/etc/pure-ftpd/passwd/pureftpd.passwd \
+  -v /opt/ftp/ssl:/etc/ssl/private \
   -e PUBLICHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
-  -e ADDED_FLAGS="-j -R -p 30000:30009" \
+  -e ADDED_FLAGS="-j -R -p 30000:30009 -Y 2 -J ALL:!aNULL:!SSLv2:!SSLv3" \
+  -e TLS_CN="ftp-server" \
+  -e TLS_ORG="FTP Server" \
   stilliard/pure-ftpd:hardened
 
 # Enable and start the S3 sync service
