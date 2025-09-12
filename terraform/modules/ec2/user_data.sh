@@ -22,10 +22,24 @@ echo "Starting S3-backed FTP container..." >> /var/log/ftp-setup.log
 # Remove old container if present
 docker rm -f s3-ftp >/dev/null 2>&1 || true
 
+# Stop any conflicting FTP services
+systemctl stop vsftpd >/dev/null 2>&1 || true
+systemctl disable vsftpd >/dev/null 2>&1 || true
+
+# Get AWS credentials from instance metadata
+ROLE_NAME=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+AWS_ACCESS_KEY_ID=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME | grep AccessKeyId | cut -d'"' -f4)
+AWS_SECRET_ACCESS_KEY=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME | grep SecretAccessKey | cut -d'"' -f4)
+AWS_SESSION_TOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE_NAME | grep Token | cut -d'"' -f4)
+
 # Run the S3-backed FTP server
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
+  -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+  -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
+  -e AWS_DEFAULT_REGION="${aws_region}" \
   -e S3_BUCKET="${s3_bucket_name}" \
   -e FTP_USER="${ftp_username}" \
   -e FTP_PASS="${ftp_password}" \
