@@ -69,11 +69,11 @@ docker run -d \
   -v /mnt/s3:/home/ftpusers/data \
   -p 21:21 \
   -p 50000-50050:50000-50050 \
-  stilliard/pure-ftpd:hardened \
-  /bin/sh -c "echo -e \"${ftp_password}\n${ftp_password}\" | pure-pw useradd ${ftp_username} -u ftpuser -d /home/ftpusers/data && \
-              pure-pw mkdb && \
-              exec /run.sh -p 50000:50050 -P \$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo localhost)"
-              
+  -e FTP_USER_NAME=${ftp_username} \
+  -e FTP_USER_PASS=${ftp_password} \
+  -e FTP_USER_HOME=/home/ftpusers/data \
+  stilliard/pure-ftpd:hardened
+
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
