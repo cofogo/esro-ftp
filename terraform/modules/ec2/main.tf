@@ -126,7 +126,6 @@ resource "aws_instance" "ftp_server" {
 
   user_data = local.user_data
 
-  # Force recreation when user_data changes
   user_data_replace_on_change = true
 
   root_block_device {
