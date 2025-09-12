@@ -4,7 +4,6 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
   event_pattern = <<EOF
 {
   "source": ["aws.s3"],
-  "detail-type": ["Object Created"],
   "detail": {
     "bucket": {
       "name": ["${var.s3_bucket_name}"]
@@ -25,11 +24,44 @@ resource "aws_s3_bucket_notification" "s3_upload_notification" {
   eventbridge = true
 }
 
+# CloudWatch Log Group for EventBridge debugging
+resource "aws_cloudwatch_log_group" "eventbridge_logs" {
+  name              = "/aws/events/s3-upload-trigger"
+  retention_in_days = 7
+
+  tags = {
+    Name        = "s3-upload-trigger-eventbridge-logs"
+    Environment = "production"
+  }
+}
+
+# CloudWatch Log Stream for EventBridge rule
+resource "aws_cloudwatch_log_stream" "eventbridge_log_stream" {
+  name           = "eventbridge-rule-logs"
+  log_group_name = aws_cloudwatch_log_group.eventbridge_logs.name
+}
+
 resource "aws_cloudwatch_event_target" "step_function_target" {
   rule      = aws_cloudwatch_event_rule.s3_upload_trigger.name
   target_id = "EsroFtpStepFunctionTarget"
   arn       = var.step_function_arn
   role_arn  = aws_iam_role.eventbridge_role.arn
+
+  input_transformer {
+    input_paths = {
+      bucket = "$.detail.bucket.name"
+      key    = "$.detail.object.key"
+      region = "$.detail.awsRegion"
+    }
+    input_template = <<EOF
+{
+  "bucket": "<bucket>",
+  "key": "<key>",
+  "region": "<region>",
+  "s3_path": "s3://<bucket>/<key>"
+}
+EOF
+  }
 }
 
 # IAM Role for EventBridge to invoke Step Function

@@ -44,12 +44,18 @@ resource "aws_sfn_state_machine" "s3_upload_trigger" {
   name     = "s3-upload-trigger"
   role_arn = aws_iam_role.step_function_role.arn
   definition = jsonencode({
-    Comment = "Generate dataset manifests monthly"
-    StartAt = "GenerateManifests"
+    Comment = "Process S3 upload trigger"
+    StartAt = "ProcessS3Upload"
     States = {
-      GenerateManifests = {
+      ProcessS3Upload = {
         Type     = "Task"
         Resource = var.lambda_function_arn
+        Parameters = {
+          "bucket.$"  = "$.bucket"
+          "key.$"     = "$.key"
+          "region.$"  = "$.region"
+          "s3_path.$" = "$.s3_path"
+        }
         Retry = [
           {
             ErrorEquals     = ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"]
@@ -68,7 +74,7 @@ resource "aws_sfn_state_machine" "s3_upload_trigger" {
       }
       HandleError = {
         Type  = "Fail"
-        Cause = "Lambda function failed to generate manifests"
+        Cause = "Lambda function failed to process S3 upload"
       }
     }
   })
