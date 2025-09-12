@@ -1,4 +1,8 @@
 #!/bin/bash
+# Enable logging
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+echo "Starting FTP server setup..."
+
 yum update -y
 
 # Install Docker
@@ -16,6 +20,11 @@ mkdir -p /opt/ftp/data
 mkdir -p /opt/ftp/config
 mkdir -p /opt/ftp/ssl
 
+# Debug: Log the variables being used
+echo "FTP Username: ${ftp_username}" >> /var/log/ftp-setup.log
+echo "S3 Bucket: ${s3_bucket_name}" >> /var/log/ftp-setup.log
+echo "AWS Region: ${aws_region}" >> /var/log/ftp-setup.log
+
 # Generate self-signed SSL certificate for FTPS
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /opt/ftp/ssl/pure-ftpd.key \
@@ -26,10 +35,12 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 chmod 600 /opt/ftp/ssl/pure-ftpd.key
 chmod 644 /opt/ftp/ssl/pure-ftpd.crt
 
-# Create FTP user configuration
-cat > /opt/ftp/config/users.conf << EOF
-${ftp_username}|${ftp_password}|/ftp|10001
-EOF
+# Create FTP user configuration (Pure-FTPd format)
+echo "${ftp_username}:${ftp_password}:1001:1001::/ftp/./:::::::::::::" > /opt/ftp/config/pureftpd.passwd
+
+# Debug: Check what user was created
+echo "Created user file:" >> /var/log/ftp-setup.log
+cat /opt/ftp/config/pureftpd.passwd >> /var/log/ftp-setup.log
 
 # Create script to sync FTP uploads to S3
 cat > /opt/ftp/sync-to-s3.sh << 'EOF'
@@ -78,19 +89,33 @@ WantedBy=multi-user.target
 EOF
 
 # Run FTP server container with SSL/TLS support
+echo "Starting Pure-FTPd container..." >> /var/log/ftp-setup.log
+
 docker run -d \
   --name ftp-server \
   --restart unless-stopped \
   -p 21:21 \
+  -p 990:990 \
   -p 30000-30009:30000-30009 \
-  -v /opt/ftp/data:/ftp \
-  -v /opt/ftp/config/users.conf:/etc/pure-ftpd/passwd/pureftpd.passwd \
-  -v /opt/ftp/ssl:/etc/ssl/private \
+  -v /opt/ftp/data:/home/ftpusers \
+  -v /opt/ftp/config/pureftpd.passwd:/etc/pure-ftpd/passwd/pureftpd.passwd \
+  -v /opt/ftp/ssl/pure-ftpd.crt:/etc/ssl/private/pure-ftpd.crt \
+  -v /opt/ftp/ssl/pure-ftpd.key:/etc/ssl/private/pure-ftpd.key \
   -e PUBLICHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
-  -e ADDED_FLAGS="-j -R -p 30000:30009 -Y 2 -J ALL:!aNULL:!SSLv2:!SSLv3" \
-  -e TLS_CN="ftp-server" \
-  -e TLS_ORG="FTP Server" \
+  -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) -p 30000:30009" \
+  -e TLS_USE_DSAPARAM="false" \
+  -e TLS_CIPHER_SUITE="HIGH" \
   stilliard/pure-ftpd:hardened
+
+# Wait for container to start
+sleep 10
+
+# Create the user database from the passwd file
+docker exec ftp-server pure-pw mkdb /etc/pure-ftpd/pureftpd.pdb -f /etc/pure-ftpd/passwd/pureftpd.passwd
+
+echo "FTP server setup completed!" >> /var/log/ftp-setup.log
+echo "Container status:" >> /var/log/ftp-setup.log
+docker ps >> /var/log/ftp-setup.log
 
 # Enable and start the S3 sync service
 systemctl enable ftp-s3-sync.service

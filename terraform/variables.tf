@@ -41,7 +41,7 @@ variable "ftp_instance_type" {
 variable "ftp_username" {
   description = "FTP server username"
   type        = string
-  default     = "esro-ftp"
+  default     = "ftpuser"
 }
 
 variable "ftp_password" {
