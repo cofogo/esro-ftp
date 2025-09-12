@@ -32,10 +32,20 @@ pkill -f vsftpd >/dev/null 2>&1 || true
 echo "Checking port 21 before starting container:" >> /var/log/ftp-setup.log
 netstat -tulpn | grep :21 >> /var/log/ftp-setup.log 2>&1 || echo "Port 21 is free" >> /var/log/ftp-setup.log
 
-# Run the S3-backed FTP server (uses IAM role credentials automatically)
+# Create the directories that the factual/s3-backed-ftp container expects
+mkdir -p /home/aws/s3bucket/ftp-users
+mkdir -p /var/run/vsftpd/empty
+mkdir -p /etc/vsftpd
+chmod 755 /home/aws/s3bucket/ftp-users
+chmod 755 /var/run/vsftpd/empty
+
+# Run the S3-backed FTP server with volume mounts for the required directories
+echo "Starting factual/s3-backed-ftp container..." >> /var/log/ftp-setup.log
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
+  -v /home/aws/s3bucket/ftp-users:/home/aws/s3bucket/ftp-users \
+  -v /var/run/vsftpd/empty:/var/run/vsftpd/empty \
   -e AWS_DEFAULT_REGION="${aws_region}" \
   -e S3_BUCKET="${s3_bucket_name}" \
   -e FTP_USER="${ftp_username}" \
