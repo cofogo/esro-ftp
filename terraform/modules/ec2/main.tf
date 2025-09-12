@@ -107,10 +107,12 @@ data "aws_ami" "amazon_linux" {
 # User data script to setup FTP server
 locals {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    ftp_username   = var.ftp_username
-    ftp_password   = var.ftp_password
-    s3_bucket_name = var.s3_bucket_name
-    aws_region     = var.aws_region
+    ftp_username          = var.ftp_username
+    ftp_password          = var.ftp_password
+    s3_bucket_name        = var.s3_bucket_name
+    aws_region            = var.aws_region
+    aws_access_key_id     = var.aws_access_key_id
+    aws_secret_access_key = var.aws_secret_access_key
   }))
 }
 

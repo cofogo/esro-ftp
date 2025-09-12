@@ -55,3 +55,15 @@ variable "ftp_allowed_cidr_blocks" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "aws_access_key_id" {
+  description = "AWS Access Key ID for S3 access"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS Secret Access Key for S3 access"
+  type        = string
+  sensitive   = true
+}

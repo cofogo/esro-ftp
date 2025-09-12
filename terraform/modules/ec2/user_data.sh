@@ -47,6 +47,8 @@ docker run -d \
   -v /home/aws/s3bucket/ftp-users:/home/aws/s3bucket/ftp-users \
   -v /var/run/vsftpd/empty:/var/run/vsftpd/empty \
   -e AWS_DEFAULT_REGION="${aws_region}" \
+  -e AWS_ACCESS_KEY_ID="${aws_access_key_id}" \
+  -e AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}" \
   -e S3_BUCKET="${s3_bucket_name}" \
   -e FTP_USER="${ftp_username}" \
   -e FTP_PASS="${ftp_password}" \
