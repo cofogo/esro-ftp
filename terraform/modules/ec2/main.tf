@@ -20,6 +20,14 @@ resource "aws_security_group" "ftp_server" {
     cidr_blocks = var.allowed_cidr_blocks
   }
 
+  # Passive FTP data ports
+  ingress {
+    from_port   = 50000
+    to_port     = 50050
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_cidr_blocks
+  }
+
   # All outbound traffic
   egress {
     from_port   = 0
