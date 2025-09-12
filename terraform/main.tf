@@ -54,18 +54,18 @@ module "cloudwatch" {
 }
 
 # EC2 Module - FTP Server
-module "ec2" {
-  source = "./modules/ec2"
+# module "ec2" {
+#   source = "./modules/ec2"
 
-  vpc_id              = var.vpc_id
-  subnet_id           = var.public_subnet_id
-  instance_type       = var.ftp_instance_type
-  ftp_username        = var.ftp_username
-  ftp_password        = var.ftp_password
-  s3_bucket_name      = var.s3_bucket_name
-  aws_region          = var.aws_region
-  allowed_cidr_blocks = var.ftp_allowed_cidr_blocks
-}
+#   vpc_id              = var.vpc_id
+#   subnet_id           = var.public_subnet_id
+#   instance_type       = var.ftp_instance_type
+#   ftp_username        = var.ftp_username
+#   ftp_password        = var.ftp_password
+#   s3_bucket_name      = var.s3_bucket_name
+#   aws_region          = var.aws_region
+#   allowed_cidr_blocks = var.ftp_allowed_cidr_blocks
+# }
 
 # AWS Secrets Manager secret for S3 configuration
 resource "aws_secretsmanager_secret" "s3_config" {
