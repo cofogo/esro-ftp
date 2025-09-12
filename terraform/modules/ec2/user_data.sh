@@ -1,5 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
+# Enable logging
 exec > >(tee -a /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting FTP server with S3 sync..."
 
@@ -32,19 +33,17 @@ echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 mkdir -p /home/ftpusers/${ftp_username}
 chown -R 1000:1000 /home/ftpusers
 
-# --- Run FTP container (instrumentisto/pure-ftpd) ---
+# --- Run FTP container (delfer/alpine-ftp-server) ---
 docker rm -f s3-ftp >/dev/null 2>&1 || true
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
   -v /home/ftpusers:/home/ftpusers \
-  -e FTP_USER_NAME=${ftp_username} \
-  -e FTP_USER_PASS=${ftp_password} \
-  -e FTP_USER_HOME=/home/ftpusers/${ftp_username} \
   -p 21:21 \
-  -p 50000-50050:50000-50050 \
-  instrumentisto/pure-ftpd \
-  pure-ftpd -c 10 -C 5 -p 50000:50050 -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+  -p 21000-21010:21000-21010 \
+  -e USERS="${ftp_username}|${ftp_password}" \
+  -e ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
+  delfer/alpine-ftp-server
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
