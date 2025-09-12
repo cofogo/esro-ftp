@@ -25,14 +25,20 @@ echo "[$(date -Is)] S3 Bucket:    ${s3_bucket_name}" >> /var/log/ftp-setup.log
 echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 
 # --- Install Mountpoint for Amazon S3 -----------------------------------------
+# --- Install Mountpoint for Amazon S3 -----------------------------------------
 echo "Installing Mountpoint for Amazon S3..." | tee -a /var/log/ftp-setup.log
-curl -LO https://github.com/awslabs/mountpoint-s3/releases/latest/download/mount-s3.rpm
+MNT_VERSION="1.18.0"
+RPM_FILE="/tmp/mount-s3-${MNT_VERSION}-x86_64.rpm"
+DOWNLOAD_URL="https://s3.amazonaws.com/mountpoint-s3-release/${MNT_VERSION}/x86_64/mount-s3-${MNT_VERSION}-x86_64.rpm"
+
+curl -L -o "${RPM_FILE}" "${DOWNLOAD_URL}"
 
 for i in {1..10}; do
-  if yum install -y ./mount-s3.rpm; then
+  if yum install -y "${RPM_FILE}"; then
+    echo "Installed mount-s3 version ${MNT_VERSION}" | tee -a /var/log/ftp-setup.log
     break
   else
-    echo "yum locked during mount-s3 install, retrying in 5s..." | tee -a /var/log/ftp-setup.log
+    echo "yum locked or install failed for mount-s3, retrying in 5s..." | tee -a /var/log/ftp-setup.log
     sleep 5
   fi
 done
