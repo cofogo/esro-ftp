@@ -31,7 +31,11 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -out /opt/ftp/ssl/pure-ftpd.crt \
     -subj "/C=US/ST=State/L=City/O=Organization/CN=ftp-server"
 
+# Create PEM file (Pure-FTPd expects key + cert in single file)
+cat /opt/ftp/ssl/pure-ftpd.key /opt/ftp/ssl/pure-ftpd.crt > /opt/ftp/ssl/pure-ftpd.pem
+
 # Set proper permissions for SSL files
+chmod 600 /opt/ftp/ssl/pure-ftpd.pem
 chmod 600 /opt/ftp/ssl/pure-ftpd.key
 chmod 644 /opt/ftp/ssl/pure-ftpd.crt
 
@@ -112,8 +116,7 @@ docker run -d \
   -p 990:990 \
   -p 30000-30009:30000-30009 \
   -v /opt/ftp/data:/home/ftpusers \
-  -v /opt/ftp/ssl/pure-ftpd.crt:/etc/ssl/private/pure-ftpd.crt \
-  -v /opt/ftp/ssl/pure-ftpd.key:/etc/ssl/private/pure-ftpd.key \
+  -v /opt/ftp/ssl/pure-ftpd.pem:/etc/ssl/private/pure-ftpd.pem \
   -e PUBLICHOST=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
   -e ADDED_FLAGS="-l puredb:/etc/pure-ftpd/pureftpd.pdb -E -j -R -P $(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) -p 30000:30009 -Y 2" \
   -e TLS_USE_DSAPARAM="false" \
@@ -125,7 +128,9 @@ sleep 15
 
 # Setup the FTP user using pure-pw inside the container
 echo "Setting up FTP user..." >> /var/log/ftp-setup.log
-/opt/ftp/setup-user.sh >> /var/log/ftp-setup.log 2>&1
+printf "%s\n%s\n" "${ftp_password}" "${ftp_password}" | docker exec -i ftp-server pure-pw useradd "${ftp_username}" -u 1001 -g 1001 -d "/home/ftpusers/${ftp_username}" -m
+docker exec ftp-server pure-pw mkdb
+docker exec ftp-server pure-pw show "${ftp_username}" >> /var/log/ftp-setup.log 2>&1
 
 # Restart container to ensure all configurations are loaded
 echo "Restarting FTP container..." >> /var/log/ftp-setup.log
