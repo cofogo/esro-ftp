@@ -57,7 +57,7 @@ while true; do
     --region ${aws_region} --exact-timestamps >> /var/log/ftp-sync.log 2>&1
   # Remove local files after syncing
   find /home/ftpusers/${ftp_username} -type f -delete
-  sleep 10
+  sleep 60
 done
 EOF
 chmod +x /usr/local/bin/s3-sync.sh
