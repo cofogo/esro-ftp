@@ -8,7 +8,10 @@ resource "aws_cloudwatch_event_rule" "s3_upload_trigger" {
     "bucket": {
       "name": ["${var.s3_bucket_name}"]
     }
-  }
+  },
+  "detail-type": [
+    "Object Created"
+  ]
 }
 EOF
 
