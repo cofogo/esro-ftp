@@ -1,0 +1,14 @@
+[certificates]
+aws_bucket = "esro-certificates"
+mtls_subdir = "endpoints/mtls/esro"
+ssl_subdir = "endpoints/local.wecodeforgood.com"
+
+[api]
+url = "https://esro.wecodeforgood.com:8443/api"
+domain = "local.wecodeforgood.com"
+port = 443
+
+[esro]
+base_url = "https://esro.wecodeforgood.com"
+
+
