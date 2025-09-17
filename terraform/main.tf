@@ -22,9 +22,10 @@ provider "aws" {
 module "iam" {
   source = "./modules/iam"
 
-  aws_region             = var.aws_region
-  s3_bucket_name         = var.s3_bucket_name
-  management_bucket_name = var.management_bucket_name
+  aws_region              = var.aws_region
+  s3_bucket_name          = var.s3_bucket_name
+  management_bucket_name  = var.management_bucket_name
+  certificate_bucket_name = var.certificate_bucket_name
 }
 
 # Lambda Module - Functions and ECR
@@ -32,8 +33,8 @@ module "lambda" {
   source = "./modules/lambda"
 
   lambda_execution_role_arn = module.iam.lambda_execution_role_arn
-  s3_secret_name            = aws_secretsmanager_secret.s3_config.name
   s3_bucket_name            = var.s3_bucket_name
+  aws_region                = var.aws_region
 
   subnet_ids         = var.private_subnets
   security_group_ids = [var.lambda_security_group_id]

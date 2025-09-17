@@ -13,3 +13,8 @@ variable "management_bucket_name" {
   type        = string
   default     = "esro-management-data"
 }
+
+variable "certificate_bucket_name" {
+  description = "Name of the S3 bucket containing certificates for mTLS"
+  type        = string
+}

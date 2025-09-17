@@ -4,13 +4,15 @@ variable "lambda_execution_role_arn" {
 }
 
 
-variable "s3_secret_name" {
-  description = "Name of the AWS Secrets Manager secret containing S3 configuration"
-  type        = string
-}
+
 
 variable "s3_bucket_name" {
   description = "Name of the S3 bucket to store generated manifests"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 
