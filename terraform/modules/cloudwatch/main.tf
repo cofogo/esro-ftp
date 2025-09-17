@@ -60,7 +60,8 @@ resource "aws_cloudwatch_event_target" "step_function_target" {
 {
   "bucket": "<bucket>",
   "key": "<key>",
-  "s3_path": "s3://<bucket>/<key>"
+  "s3_path": "s3://<bucket>/<key>",
+  "region": "<region>"
 }
 EOF
   }
