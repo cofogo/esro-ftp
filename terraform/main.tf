@@ -22,8 +22,9 @@ provider "aws" {
 module "iam" {
   source = "./modules/iam"
 
-  aws_region     = var.aws_region
-  s3_bucket_name = var.s3_bucket_name
+  aws_region             = var.aws_region
+  s3_bucket_name         = var.s3_bucket_name
+  management_bucket_name = var.management_bucket_name
 }
 
 # Lambda Module - Functions and ECR
