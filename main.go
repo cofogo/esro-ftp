@@ -88,7 +88,7 @@ func handler(ctx context.Context, event S3Event) error {
 	}
 
 	// Call the /scan endpoint
-	fmt.Printf("Calling /scan endpoint with S3 path: %s\n", s3Path)
+	fmt.Printf("Calling /scan endpoint with S3 path: %s\n", path)
 	response, err := client.Post(ctx, "/scan", scanReq)
 	if err != nil {
 		log.Printf("Failed to call /scan endpoint: %v", err)
