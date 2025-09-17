@@ -16,15 +16,19 @@ variable "instance_type" {
 
 
 variable "ftp_username" {
-  description = "FTP server username"
+  description = "FTP server username (legacy - use ftp_users for multiple users)"
   type        = string
   default     = "ftpuser"
 }
 
 variable "ftp_password" {
-  description = "FTP server password"
+  description = "FTP server password (legacy - use ftp_users for multiple users)"
   type        = string
   sensitive   = true
+}
+variable "ftp_domain" {
+  description = "Domain name for FTPS server (for SSL certificate)"
+  type        = string
 }
 
 variable "s3_bucket_name" {
@@ -53,5 +57,11 @@ variable "aws_secret_access_key" {
   description = "AWS Secret Access Key for S3 access"
   type        = string
   sensitive   = true
+}
+
+variable "route53_zone_name" {
+  description = "Route53 hosted zone name (e.g., 'example.com') - if provided, DNS record will be created automatically"
+  type        = string
+  default     = ""
 }
 

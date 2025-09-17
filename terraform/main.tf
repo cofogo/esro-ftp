@@ -62,11 +62,15 @@ module "ec2" {
   instance_type         = var.ftp_instance_type
   ftp_username          = var.ftp_username
   ftp_password          = var.ftp_password
+  ftp_domain            = var.ftp_domain
   s3_bucket_name        = var.s3_bucket_name
   aws_region            = var.aws_region
   allowed_cidr_blocks   = var.ftp_allowed_cidr_blocks
   aws_access_key_id     = var.aws_access_key_id
   aws_secret_access_key = var.aws_secret_access_key
+
+  # DNS Configuration - automatically creates DNS record if zone name is provided
+  route53_zone_name = var.route53_zone_name
 }
 
 # AWS Secrets Manager secret for S3 configuration

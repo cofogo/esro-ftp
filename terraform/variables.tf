@@ -50,6 +50,11 @@ variable "ftp_password" {
   sensitive   = true
 }
 
+variable "ftp_domain" {
+  description = "Domain name for FTPS server (required for self-signed certificate)"
+  type        = string
+}
+
 variable "ftp_allowed_cidr_blocks" {
   description = "CIDR blocks allowed to access FTP server"
   type        = list(string)
@@ -66,4 +71,11 @@ variable "aws_secret_access_key" {
   description = "AWS Secret Access Key for S3 access"
   type        = string
   sensitive   = true
+}
+
+# DNS Configuration
+variable "route53_zone_name" {
+  description = "Route53 hosted zone name (e.g., 'example.com') - if provided, DNS record will be created automatically"
+  type        = string
+  default     = ""
 }

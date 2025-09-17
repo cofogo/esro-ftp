@@ -116,6 +116,7 @@ locals {
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     ftp_username          = var.ftp_username
     ftp_password          = var.ftp_password
+    ftp_domain            = var.ftp_domain
     s3_bucket_name        = var.s3_bucket_name
     aws_region            = var.aws_region
     aws_access_key_id     = var.aws_access_key_id
@@ -147,5 +148,40 @@ resource "aws_instance" "ftp_server" {
 
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+resource "aws_eip" "ftp_server" {
+  instance = aws_instance.ftp_server.id
+  domain   = "vpc"
+
+  tags = {
+    Name        = "ftp-server-eip"
+    Environment = "production"
+  }
+
+  depends_on = [aws_instance.ftp_server]
+}
+
+# Data source to get the existing Route53 hosted zone
+data "aws_route53_zone" "domain" {
+  count = var.route53_zone_name != "" ? 1 : 0
+  name  = var.route53_zone_name
+}
+
+# Create DNS A record pointing to the Elastic IP
+resource "aws_route53_record" "ftp_server" {
+  count   = var.route53_zone_name != "" ? 1 : 0
+  zone_id = data.aws_route53_zone.domain[0].zone_id
+  name    = var.ftp_domain
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.ftp_server.public_ip]
+
+  depends_on = [aws_eip.ftp_server]
+
+  lifecycle {
+    # Prevent accidental deletion of DNS record
+    prevent_destroy = false
   }
 }
