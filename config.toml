@@ -1,5 +1,6 @@
-[certificates]
-aws_bucket = "esro-certificates"
+[aws]
+region = "eu-central-1"
+certs_bucket = "esro-certificates"
 mtls_subdir = "endpoints/mtls/esro"
 ssl_subdir = "endpoints/local.wecodeforgood.com"
 

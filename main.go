@@ -74,9 +74,9 @@ func handler(ctx context.Context, event S3Event) error {
 
 	// Create HTTP client with mTLS
 	client, err := httpmtls.NewClient(
-		cfg.Certificates.AWSBucket,
-		cfg.Certificates.AWSRegion,
-		cfg.Certificates.MTLSSubdir,
+		cfg.AWS.CertsBucket,
+		cfg.AWS.Region,
+		cfg.AWS.MTLSSubdir,
 		cfg.DataDir,
 		cfg.ESRO.BaseURL,
 	)

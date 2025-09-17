@@ -27,18 +27,15 @@ type Config struct {
 		BaseURL string `mapstructure:"base_url"`
 	} `mapstructure:"esro"`
 
-	Certificates struct {
-		AWSBucket  string `mapstructure:"aws_bucket"`
-		AWSRegion  string `mapstructure:"aws_region"`
-		MTLSSubdir string `mapstructure:"mtls_subdir"`
-		SSLSubdir  string `mapstructure:"ssl_subdir"`
-	} `mapstructure:"certificates"`
-
-	Cloud struct {
-		AWSBucket string `mapstructure:"aws_bucket"`
-		AWSRegion string `mapstructure:"aws_region"`
-		S3Subdir  string `mapstructure:"s3_subdir"`
-	} `mapstructure:"cloud"`
+	// Simplified AWS configuration
+	AWS struct {
+		Region      string `mapstructure:"region"`
+		CertsBucket string `mapstructure:"certs_bucket"`
+		DataBucket  string `mapstructure:"data_bucket"`
+		MTLSSubdir  string `mapstructure:"mtls_subdir"`
+		SSLSubdir   string `mapstructure:"ssl_subdir"`
+		DataSubdir  string `mapstructure:"data_subdir"`
+	} `mapstructure:"aws"`
 
 	Mock struct {
 		ImageSizeMB int    `mapstructure:"image_size_mb"`
@@ -69,14 +66,13 @@ func Load(configPath string) *Config {
 
 	viper.SetDefault("esro.base_url", "https://esro.wecodeforgood.com")
 
-	viper.SetDefault("certificates.aws_bucket", "")
-	viper.SetDefault("certificates.aws_region", "")
-	viper.SetDefault("certificates.mtls_subdir", "")
-	viper.SetDefault("certificates.ssl_subdir", "")
-
-	viper.SetDefault("cloud.aws_bucket", "")
-	viper.SetDefault("cloud.aws_region", "")
-	viper.SetDefault("cloud.s3_subdir", "")
+	// Simplified AWS defaults
+	viper.SetDefault("aws.region", "eu-central-1")
+	viper.SetDefault("aws.certs_bucket", "")
+	viper.SetDefault("aws.data_bucket", "")
+	viper.SetDefault("aws.mtls_subdir", "")
+	viper.SetDefault("aws.ssl_subdir", "")
+	viper.SetDefault("aws.data_subdir", "")
 
 	viper.SetDefault("mock.image_size_mb", 50) // Default to ~50MB images
 	viper.SetDefault("mock.image_type", "gradient")
