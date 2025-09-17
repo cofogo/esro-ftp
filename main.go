@@ -77,8 +77,7 @@ func handler(ctx context.Context, event S3Event) error {
 		cfg.AWS.CertsBucket,
 		cfg.AWS.Region,
 		cfg.AWS.MTLSSubdir,
-		cfg.DataDir,
-		cfg.ESRO.BaseURL,
+		cfg.API.URL,
 	)
 	if err != nil {
 		log.Printf("Failed to create HTTP client: %v", err)

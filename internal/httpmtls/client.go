@@ -21,7 +21,7 @@ type Client struct {
 	logger     *log.Logger
 }
 
-func NewClient(bucket, region, s3SubDir, dataDir, baseURL string) (*Client, error) {
+func NewClient(bucket, region, s3SubDir, baseURL string) (*Client, error) {
 	logger := log.New(os.Stdout, "[HTTP (mTLS)] ", log.LstdFlags|log.Lshortfile)
 	logger.Printf("Loading certificates from S3 bucket=%s prefix=%s", bucket, s3SubDir)
 
