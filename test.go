@@ -21,11 +21,15 @@ func testHandler() {
 	}
 
 	fmt.Printf("Testing with event: %+v\n", event)
-	
+
 	// This would call the handler in a real scenario
 	// For now, just show what would happen
-	fmt.Printf("Would process S3 file: %s/%s\n", event.Bucket, event.Key)
-	fmt.Printf("Would call ESRO endpoint: https://esro.wecodeforgood.com/scan\n")
-	fmt.Printf("With payload: {\"s3_path\": \"%s\"}\n", event.S3Path)
-	fmt.Println("✅ Test completed successfully!")
+	fmt.Printf("📁 Original S3 file: s3://%s/%s\n", event.Bucket, event.Key)
+	fmt.Printf("📋 Step 1: Would copy file to esro-management-data/uploads/%s\n", event.Key)
+
+	newS3Path := fmt.Sprintf("s3://esro-management-data/uploads/%s", event.Key)
+	fmt.Printf("📋 Step 2: Would call ESRO endpoint: https://esro.wecodeforgood.com/scan\n")
+	fmt.Printf("📋 Step 3: With payload: {\"s3_path\": \"%s\"}\n", newS3Path)
+	fmt.Println("✅ Test flow completed successfully!")
+	fmt.Printf("🎯 Final S3 path for scanning: %s\n", newS3Path)
 }

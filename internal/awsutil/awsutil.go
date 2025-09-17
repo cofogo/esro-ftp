@@ -67,6 +67,22 @@ func (a *AWSUtil) UploadToS3(ctx context.Context, content []byte, key string) er
 	return nil
 }
 
+// CopyS3Object copies an object from one S3 location to another.
+func (a *AWSUtil) CopyS3Object(ctx context.Context, sourceBucket, sourceKey, destBucket, destKey string) error {
+	copySource := fmt.Sprintf("%s/%s", sourceBucket, sourceKey)
+
+	_, err := a.S3Client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(destBucket),
+		Key:        aws.String(destKey),
+		CopySource: aws.String(copySource),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to copy object from s3://%s/%s to s3://%s/%s: %w",
+			sourceBucket, sourceKey, destBucket, destKey, err)
+	}
+	return nil
+}
+
 // IsS3NotFoundErr checks if the error is an S3 'NotFound' type error.
 func IsS3NotFoundErr(err error) bool {
 	var nsk *s3types.NoSuchKey

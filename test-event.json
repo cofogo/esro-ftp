@@ -1,6 +1,6 @@
 {
-  "bucket": "test-bucket",
-  "key": "uploads/test-file.jpg",
+  "bucket": "source-ftp-bucket",
+  "key": "incoming/document-123.pdf",
   "region": "us-east-1",
-  "s3_path": "s3://test-bucket/uploads/test-file.jpg"
+  "s3_path": ""
 }
