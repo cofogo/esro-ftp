@@ -22,6 +22,10 @@ type Client struct {
 }
 
 func NewClient(bucket, region, s3SubDir, baseURL string) (*Client, error) {
+	return NewClientWithTimeout(bucket, region, s3SubDir, baseURL, 120*time.Second)
+}
+
+func NewClientWithTimeout(bucket, region, s3SubDir, baseURL string, timeout time.Duration) (*Client, error) {
 	logger := log.New(os.Stdout, "[HTTP (mTLS)] ", log.LstdFlags|log.Lshortfile)
 	logger.Printf("Loading certificates from S3 bucket=%s prefix=%s", bucket, s3SubDir)
 
@@ -40,10 +44,10 @@ func NewClient(bucket, region, s3SubDir, baseURL string) (*Client, error) {
 
 	httpClient := &http.Client{
 		Transport: &http.Transport{TLSClientConfig: tlsConfig},
-		Timeout:   30 * time.Second,
+		Timeout:   timeout,
 	}
 
-	logger.Printf("Client ready for BaseURL=%s", baseURL)
+	logger.Printf("Client ready for BaseURL=%s with timeout=%v", baseURL, timeout)
 	return &Client{httpClient, baseURL, logger}, nil
 }
 

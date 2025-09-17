@@ -1,12 +1,18 @@
 package config
 
+import (
+	"os"
+	"strconv"
+)
+
 // Config struct with hardcoded values for simplicity
 type Config struct {
 	API struct {
-		URL      string
-		Domain   string
-		Port     int
-		GRPC_URL string
+		URL        string
+		Domain     string
+		Port       int
+		GRPC_URL   string
+		TimeoutSec int
 	}
 
 	AWS struct {
@@ -32,6 +38,14 @@ func Load(configPath string) *Config {
 	cfg.API.Domain = "local.wecodeforgood.com"
 	cfg.API.Port = 443
 	cfg.API.GRPC_URL = "localhost:50051"
+
+	// Set timeout from environment or default to 5 minutes
+	cfg.API.TimeoutSec = 300 // 5 minutes default
+	if timeoutStr := os.Getenv("API_TIMEOUT_SEC"); timeoutStr != "" {
+		if timeout, err := strconv.Atoi(timeoutStr); err == nil && timeout > 0 {
+			cfg.API.TimeoutSec = timeout
+		}
+	}
 
 	cfg.AWS.Region = "eu-central-1"
 	cfg.AWS.CertsBucket = "esro-certificates"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/cofogo/esro-ftp-trigger/internal"
@@ -70,12 +71,14 @@ func handler(ctx context.Context, event S3Event) error {
 	// Create S3 path pointing to the new location
 	path := fmt.Sprintf("uploads/%s", filepath.Base(event.Key))
 
-	// Create HTTP client with mTLS
-	client, err := httpmtls.NewClient(
+	// Create HTTP client with mTLS and configurable timeout
+	timeout := time.Duration(cfg.API.TimeoutSec) * time.Second
+	client, err := httpmtls.NewClientWithTimeout(
 		cfg.AWS.CertsBucket,
 		cfg.AWS.Region,
 		cfg.AWS.MTLSSubdir,
 		cfg.API.URL,
+		timeout,
 	)
 	if err != nil {
 		log.Printf("Failed to create HTTP client: %v", err)
