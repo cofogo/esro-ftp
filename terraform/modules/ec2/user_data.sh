@@ -44,11 +44,35 @@ mkdir -p /etc/ssl/private
 mkdir -p /etc/ssl/certs
 
 # Generate self-signed certificate valid for 365 days
+# Create a temporary config file for the certificate with SAN extension
+cat > /tmp/cert.conf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+C=US
+ST=State
+L=City
+O=Organization
+OU=OrgUnit
+CN=$DOMAIN
+
+[v3_req]
+keyUsage = keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = DNS:$DOMAIN
+EOF
+
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout /etc/ssl/private/$DOMAIN.key \
   -out /etc/ssl/certs/$DOMAIN.crt \
-  -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=$DOMAIN" \
-  -addext "subjectAltName=DNS:$DOMAIN" >> /var/log/ftp-setup.log 2>&1
+  -config /tmp/cert.conf \
+  -extensions v3_req >> /var/log/ftp-setup.log 2>&1
+
+# Clean up temp config file
+rm -f /tmp/cert.conf
 
 if [ -f "/etc/ssl/certs/$DOMAIN.crt" ] && [ -f "/etc/ssl/private/$DOMAIN.key" ]; then
   echo "[$(date -Is)] Self-signed SSL certificate generated successfully" | tee -a /var/log/ftp-setup.log
