@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -92,4 +93,34 @@ func EnsureCertificates(bucket, region, s3SubDir, domain, dataDir, certFileName,
 	}
 
 	return certPath, keyPath, nil
+}
+
+// LoadCertificatesFromS3 loads certificate and key directly from S3 into memory
+// without writing to the filesystem. Returns a tls.Certificate that can be used directly.
+func LoadCertificatesFromS3(bucket, region, s3SubDir, certFileName, keyFileName string) (tls.Certificate, error) {
+	awsClient, err := awsutil.New(context.Background(), bucket, region)
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("failed to initialize AWS client: %w", err)
+	}
+
+	remoteCertKey := fmt.Sprintf("%s/%s", s3SubDir, certFileName)
+	remoteKeyKey := fmt.Sprintf("%s/%s", s3SubDir, keyFileName)
+
+	certContent, err := awsClient.GetS3Object(context.Background(), remoteCertKey)
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("failed to download certificate: %w", err)
+	}
+
+	keyContent, err := awsClient.GetS3Object(context.Background(), remoteKeyKey)
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("failed to download key: %w", err)
+	}
+
+	// Parse the certificate and key directly from memory
+	cert, err := tls.X509KeyPair(certContent, keyContent)
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("failed to parse certificate and key: %w", err)
+	}
+
+	return cert, nil
 }

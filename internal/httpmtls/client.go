@@ -23,22 +23,15 @@ type Client struct {
 
 func NewClient(bucket, region, s3SubDir, dataDir, baseURL string) (*Client, error) {
 	logger := log.New(os.Stdout, "[HTTP (mTLS)] ", log.LstdFlags|log.Lshortfile)
-	logger.Printf("EnsureCertificates bucket=%s prefix=%s", bucket, s3SubDir)
+	logger.Printf("Loading certificates from S3 bucket=%s prefix=%s", bucket, s3SubDir)
 
-	certPath, keyPath, err := server.EnsureCertificates(
-		bucket, region, s3SubDir, "client", dataDir, "client.crt", "client.key", server.DefaultWarningWindow,
-	)
+	// Load certificate directly from S3 without writing to filesystem
+	cert, err := server.LoadCertificatesFromS3(bucket, region, s3SubDir, "client.crt", "client.key")
 	if err != nil {
-		logger.Printf("ERROR EnsureCertificates: %v", err)
-		return nil, fmt.Errorf("ensuring certificates: %w", err)
+		logger.Printf("ERROR LoadCertificatesFromS3: %v", err)
+		return nil, fmt.Errorf("loading certificates from S3: %w", err)
 	}
-	logger.Printf("Loaded cert=%s key=%s", certPath, keyPath)
-
-	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
-	if err != nil {
-		logger.Printf("ERROR LoadX509KeyPair: %v", err)
-		return nil, fmt.Errorf("loading client certificate: %w", err)
-	}
+	logger.Printf("Successfully loaded certificate from S3")
 
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
