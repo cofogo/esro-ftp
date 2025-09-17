@@ -23,7 +23,7 @@ type S3Event struct {
 
 // ScanRequest represents the payload to send to the /scan endpoint
 type ScanRequest struct {
-	S3Path string `json:"s3_path"`
+	S3Path string `json:"s3Path"`
 }
 
 // moveFileToManagementBucket copies a file from the source bucket to esro-management-data/uploads
