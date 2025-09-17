@@ -75,7 +75,8 @@ resource "aws_iam_policy" "lambda_s3_policy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject"
+          "s3:GetObject",
+          "s3:ListBucket"
         ]
         Resource = "arn:aws:s3:::${var.certificate_bucket_name}/*"
       }
