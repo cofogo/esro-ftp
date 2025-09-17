@@ -29,10 +29,6 @@ output "s3_secret_arn" {
   sensitive   = true
 }
 
-output "s3_secret_name" {
-  description = "Name of the S3 configuration secret"
-  value       = aws_secretsmanager_secret.s3_config.name
-}
 
 # FTP Server outputs
 # output "ftp_server_instance_id" {

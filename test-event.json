@@ -1,1 +1,6 @@
-{}
+{
+  "bucket": "source-ftp-bucket",
+  "key": "incoming/document-123.pdf",
+  "region": "us-east-1",
+  "s3_path": ""
+}

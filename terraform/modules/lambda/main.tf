@@ -42,13 +42,6 @@ resource "aws_lambda_function" "s3_upload_trigger" {
   timeout       = 300
   memory_size   = 512
 
-  environment {
-    variables = {
-      S3_SECRET_NAME = var.s3_secret_name
-      S3_BUCKET      = var.s3_bucket_name
-    }
-  }
-
   depends_on = [
     aws_cloudwatch_log_group.lambda_logs,
   ]

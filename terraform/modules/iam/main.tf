@@ -62,6 +62,29 @@ resource "aws_iam_policy" "lambda_s3_policy" {
           "s3:GetObject"
         ]
         Resource = "arn:aws:s3:::${var.s3_bucket_name}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObject"
+        ]
+        Resource = "arn:aws:s3:::${var.management_bucket_name}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.certificate_bucket_name}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = "arn:aws:s3:::${var.certificate_bucket_name}/*"
       }
     ]
   })
