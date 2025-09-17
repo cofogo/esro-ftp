@@ -68,9 +68,7 @@ func handler(ctx context.Context, event S3Event) error {
 	}
 
 	// Create S3 path pointing to the new location
-	newKey := fmt.Sprintf("uploads/%s", filepath.Base(event.Key))
-	s3Path := fmt.Sprintf("s3://esro-management-data/%s", newKey)
-	fmt.Printf("File moved successfully. New S3 path: %s\n", s3Path)
+	path := fmt.Sprintf("uploads/%s", filepath.Base(event.Key))
 
 	// Create HTTP client with mTLS
 	client, err := httpmtls.NewClient(
@@ -86,7 +84,7 @@ func handler(ctx context.Context, event S3Event) error {
 
 	// Prepare scan request
 	scanReq := ScanRequest{
-		S3Path: s3Path,
+		S3Path: path,
 	}
 
 	// Call the /scan endpoint
