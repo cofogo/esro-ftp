@@ -20,6 +20,13 @@ resource "aws_security_group" "ftp_server" {
     cidr_blocks = var.allowed_cidr_blocks
   }
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.allowed_cidr_blocks
+  }
+
   # FTPS implicit SSL port
   ingress {
     from_port   = 990
