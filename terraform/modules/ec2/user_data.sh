@@ -39,7 +39,7 @@ docker rm -f s3-ftp >/dev/null 2>&1 || true
 echo "[$(date -Is)] Starting FTPS server with self-signed SSL..." | tee -a /var/log/ftp-setup.log
 
 mkdir -p /etc/letsencrypt
-docker run --rm \
+docker run -it --rm \
     -p 80:80 \
     -v "/etc/letsencrypt:/etc/letsencrypt" \
     certbot/certbot certonly \
