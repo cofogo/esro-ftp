@@ -4,28 +4,28 @@ set -Eeuo pipefail
 exec > >(tee -a /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting FTPS server with S3 sync..."
 
-# --- Wait for yum lock ---
-while fuser /var/run/yum.pid >/dev/null 2>&1; do
-  echo "yum is locked, waiting 5s..." | tee -a /var/log/ftp-setup.log
+# --- Wait for dnf lock (Amazon Linux 2023 uses dnf) ---
+while fuser /var/run/dnf.pid >/dev/null 2>&1; do
+  echo "dnf is locked, waiting 5s..." | tee -a /var/log/ftp-setup.log
   sleep 5
 done
 
 # --- Base packages ---
 for i in {1..10}; do
-  if yum update -y; then break
+  if dnf update -y; then break
   else
-    echo "yum locked, retrying in 5s..." | tee -a /var/log/ftp-setup.log
+    echo "dnf locked, retrying in 5s..." | tee -a /var/log/ftp-setup.log
     sleep 5
   fi
 done
 
-yum install -y docker unzip wget curl awscli python3-pip
+dnf install -y docker unzip wget curl awscli python3-pip inotify-tools
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user || true
 
 # Install openssl for self-signed certificates
-yum install -y openssl
+dnf install -y openssl
 
 # --- Debug: variables ---
 echo "[$(date -Is)] FTP Username: ${ftp_username}"   >> /var/log/ftp-setup.log
