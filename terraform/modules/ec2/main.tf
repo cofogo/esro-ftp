@@ -168,7 +168,7 @@ data "aws_route53_zone" "domain" {
 }
 # FOR NOW HERE, SHOULD BE REMOVED
 resource "aws_route53_record" "esro_apex_a" {
-  zone_id = data.aws_route53_zone.esro.zone_id
+  zone_id = data.aws_route53_zone.domain[0].zone_id
   name    = ""
   type    = "A"
   alias {
