@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 # Enable logging
 exec > >(tee -a /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
-echo "Starting FTPS server with S3 sync..."
+echo "Starting FTP server with S3 sync..."
 
 # --- Wait for yum lock ---
 while fuser /var/run/yum.pid >/dev/null 2>&1; do
@@ -33,11 +33,6 @@ echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 mkdir -p /home/ftpusers/${ftp_username}
 chown -R 1000:1000 /home/ftpusers
 
-# --- Run FTPS container (delfer/alpine-ftp-server) ---
-docker rm -f s3-ftp >/dev/null 2>&1 || true
-
-echo "[$(date -Is)] Starting FTPS server with self-signed SSL..." | tee -a /var/log/ftp-setup.log
-
 mkdir -p /etc/letsencrypt
 docker run --rm \
     -p 80:80 \
@@ -48,23 +43,26 @@ docker run --rm \
     -n --agree-tos \
     --email tech@wecodeforgood.com \
     -d ftp.esro.wecodeforgood.com
-    
+
+docker rm -f s3-ftp >/dev/null 2>&1 || true
+
 docker run -d \
-    --name ftp \
-    -p "21:21" \
-    -p 21000-21010:21000-21010 \
-    -v "/etc/letsencrypt:/etc/letsencrypt:ro" \
-    -v /home/ftpusers:/ftp \
-    -e USERS="${ftp_username}|${ftp_password}" \
-    -e ADDRESS=ftp.esro.wecodeforgood.com \
-    -e TLS_CERT="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/fullchain.pem" \
-    -e TLS_KEY="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/privkey.pem" \
-    delfer/alpine-ftp-server
+  --name s3-ftp \
+  --restart unless-stopped \
+  -v /home/ftpusers:/ftp \
+  -v "/etc/letsencrypt:/etc/letsencrypt:ro" \
+  -p 21:21 \
+  -p 990:990 \
+  -p 21000-21010:21000-21010 \
+  -e USERS="${ftp_username}|${ftp_password}" \
+  -e ADDRESS=ftp.esro.wecodeforgood.com \
+  -e TLS_CERT="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/fullchain.pem" \
+  -e TLS_KEY="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/privkey.pem" \
+  delfer/alpine-ftp-server
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
-docker logs --tail 20 ftp | tee -a /var/log/ftp-setup.log
-
+docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
 
 # --- Background sync to S3 ---
 cat >/usr/local/bin/s3-sync.sh <<'EOF'
@@ -81,4 +79,4 @@ chmod +x /usr/local/bin/s3-sync.sh
 
 nohup /usr/local/bin/s3-sync.sh >> /var/log/ftp-sync.log 2>&1 &
 
-echo "FTPS server with S3 sync started successfully!" | tee -a /var/log/ftp-setup.log
+echo "FTP server with S3 sync started successfully!" | tee -a /var/log/ftp-setup.log
