@@ -54,6 +54,7 @@ docker run -d \
     -p "21:21" \
     -p 21000-21010:21000-21010 \
     -v "/etc/letsencrypt:/etc/letsencrypt:ro" \
+    -v /home/ftpusers:/ftp \
     -e USERS="${ftp_username}|${ftp_password}" \
     -e ADDRESS=ftp.esro.wecodeforgood.com \
     -e TLS_CERT="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/fullchain.pem" \
