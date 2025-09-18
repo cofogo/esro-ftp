@@ -19,7 +19,7 @@ for i in {1..10}; do
   fi
 done
 
-yum install -y docker unzip wget curl awscli telnet net-tools
+yum install -y docker unzip wget curl awscli
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user || true
@@ -76,20 +76,9 @@ rm -f /tmp/cert.conf
 
 if [ -f "/etc/ssl/certs/$DOMAIN.crt" ] && [ -f "/etc/ssl/private/$DOMAIN.key" ]; then
   echo "[$(date -Is)] Self-signed SSL certificate generated successfully" | tee -a /var/log/ftp-setup.log
-  
-  # Ensure proper permissions for certificates
-  chmod 644 /etc/ssl/certs/$DOMAIN.crt
-  chmod 600 /etc/ssl/private/$DOMAIN.key
-  
-  # Set paths as they will appear inside the container (mounted volume)
   TLS_CERT="/etc/ssl/certs/$DOMAIN.crt"
   TLS_KEY="/etc/ssl/private/$DOMAIN.key"
   ADDRESS=$DOMAIN
-  
-  # Debug: Show certificate info
-  echo "[$(date -Is)] Certificate file: $TLS_CERT" | tee -a /var/log/ftp-setup.log
-  echo "[$(date -Is)] Key file: $TLS_KEY" | tee -a /var/log/ftp-setup.log
-  ls -la /etc/ssl/certs/$DOMAIN.crt /etc/ssl/private/$DOMAIN.key | tee -a /var/log/ftp-setup.log
 else
   echo "[$(date -Is)] SSL certificate generation failed" | tee -a /var/log/ftp-setup.log
   exit 1
@@ -103,17 +92,6 @@ chown -R 1000:1000 /home/ftpusers
 docker rm -f s3-ftp >/dev/null 2>&1 || true
 
 echo "[$(date -Is)] Starting FTPS server with self-signed SSL..." | tee -a /var/log/ftp-setup.log
-
-# Debug: Show environment variables that will be passed to container
-echo "[$(date -Is)] Docker environment variables:" | tee -a /var/log/ftp-setup.log
-echo "  USERS=${ftp_username}|[PASSWORD_HIDDEN]" | tee -a /var/log/ftp-setup.log
-echo "  ADDRESS=$ADDRESS" | tee -a /var/log/ftp-setup.log
-echo "  TLS_CERT=$TLS_CERT" | tee -a /var/log/ftp-setup.log
-echo "  TLS_KEY=$TLS_KEY" | tee -a /var/log/ftp-setup.log
-
-# First try without TLS to see if the basic FTP works
-echo "[$(date -Is)] Starting FTP server (will try with and without TLS)..." | tee -a /var/log/ftp-setup.log
-
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
@@ -123,59 +101,14 @@ docker run -d \
   -p 990:990 \
   -p 21000-21010:21000-21010 \
   -e USERS="${ftp_username}|${ftp_password}" \
-  -e ADDRESS="$ADDRESS" \
+  -e ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
   -e TLS_CERT="$TLS_CERT" \
   -e TLS_KEY="$TLS_KEY" \
-  -e MIN_PORT=21000 \
-  -e MAX_PORT=21010 \
-  -e PASV_ADDRESS="$ADDRESS" \
-  -e IMPLICIT_SSL=1 \
   delfer/alpine-ftp-server
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
-
-# Wait a bit more and check if the container is still running
-sleep 10
-if docker ps | grep -q s3-ftp; then
-  echo "[$(date -Is)] FTPS container is running successfully" | tee -a /var/log/ftp-setup.log
-  
-  # Additional debugging - check if FTP service is actually listening
-  echo "[$(date -Is)] Checking if FTP services are listening on ports 21 and 990..." | tee -a /var/log/ftp-setup.log
-  sleep 5
-  
-  # Test local connection to FTP
-  if netstat -tuln | grep -q ":21 "; then
-    echo "[$(date -Is)] FTP service is listening on port 21" | tee -a /var/log/ftp-setup.log
-  else
-    echo "[$(date -Is)] WARNING: FTP service is NOT listening on port 21" | tee -a /var/log/ftp-setup.log
-  fi
-  
-  if netstat -tuln | grep -q ":990 "; then
-    echo "[$(date -Is)] FTPS service is listening on port 990" | tee -a /var/log/ftp-setup.log
-  else
-    echo "[$(date -Is)] WARNING: FTPS service is NOT listening on port 990" | tee -a /var/log/ftp-setup.log
-  fi
-  
-  # Show all listening ports
-  echo "[$(date -Is)] All listening ports:" | tee -a /var/log/ftp-setup.log
-  netstat -tuln | grep LISTEN | tee -a /var/log/ftp-setup.log
-  
-  # Check container logs for any errors
-  echo "[$(date -Is)] Container logs (last 50 lines):" | tee -a /var/log/ftp-setup.log
-  docker logs --tail 50 s3-ftp | tee -a /var/log/ftp-setup.log
-  
-  # Test basic connectivity to container
-  echo "[$(date -Is)] Testing connectivity to container on both ports..." | tee -a /var/log/ftp-setup.log
-  timeout 10 telnet localhost 21 || echo "[$(date -Is)] Telnet to localhost:21 failed" | tee -a /var/log/ftp-setup.log
-  timeout 10 telnet localhost 990 || echo "[$(date -Is)] Telnet to localhost:990 failed" | tee -a /var/log/ftp-setup.log
-  
-else
-  echo "[$(date -Is)] FTPS container failed to start or exited" | tee -a /var/log/ftp-setup.log
-  docker logs s3-ftp | tee -a /var/log/ftp-setup.log
-  exit 1
-fi
 
 
 # --- Background sync to S3 ---
@@ -194,3 +127,21 @@ chmod +x /usr/local/bin/s3-sync.sh
 nohup /usr/local/bin/s3-sync.sh >> /var/log/ftp-sync.log 2>&1 &
 
 echo "FTPS server with S3 sync started successfully!" | tee -a /var/log/ftp-setup.log
+echo "" | tee -a /var/log/ftp-setup.log
+echo "=== FILEZILLA CONNECTION SETTINGS ===" | tee -a /var/log/ftp-setup.log
+echo "Protocol: FTP - File Transfer Protocol" | tee -a /var/log/ftp-setup.log
+echo "Host: $DOMAIN" | tee -a /var/log/ftp-setup.log
+echo "Port: 990" | tee -a /var/log/ftp-setup.log
+echo "Encryption: Implicit FTP over TLS" | tee -a /var/log/ftp-setup.log
+echo "Logon type: Normal" | tee -a /var/log/ftp-setup.log
+echo "User: ${ftp_username}" | tee -a /var/log/ftp-setup.log
+echo "Password: [configured password]" | tee -a /var/log/ftp-setup.log
+echo "" | tee -a /var/log/ftp-setup.log
+echo "ALTERNATIVE (Explicit FTPS):" | tee -a /var/log/ftp-setup.log
+echo "Host: $DOMAIN" | tee -a /var/log/ftp-setup.log
+echo "Port: 21" | tee -a /var/log/ftp-setup.log
+echo "Encryption: Explicit FTP over TLS" | tee -a /var/log/ftp-setup.log
+echo "" | tee -a /var/log/ftp-setup.log
+echo "Public IP for passive mode: $PUBLIC_IP" | tee -a /var/log/ftp-setup.log
+echo "Passive ports: 21000-21010" | tee -a /var/log/ftp-setup.log
+echo "===============================" | tee -a /var/log/ftp-setup.log
