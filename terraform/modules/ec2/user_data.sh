@@ -33,31 +33,16 @@ echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 mkdir -p /home/ftpusers/${ftp_username}
 chown -R 1000:1000 /home/ftpusers
 
-mkdir -p /etc/letsencrypt
-docker run --rm \
-    -p 80:80 \
-    -v "/etc/letsencrypt:/etc/letsencrypt" \
-    certbot/certbot certonly \
-    --standalone \
-    --preferred-challenges http \
-    -n --agree-tos \
-    --email tech@wecodeforgood.com \
-    -d ftp.esro.wecodeforgood.com
-
+# --- Run FTP container (delfer/alpine-ftp-server) ---
 docker rm -f s3-ftp >/dev/null 2>&1 || true
-
 docker run -d \
   --name s3-ftp \
   --restart unless-stopped \
   -v /home/ftpusers:/ftp \
-  -v "/etc/letsencrypt:/etc/letsencrypt:ro" \
   -p 21:21 \
-  -p 990:990 \
   -p 21000-21010:21000-21010 \
   -e USERS="${ftp_username}|${ftp_password}" \
-  -e ADDRESS=ftp.esro.wecodeforgood.com \
-  -e TLS_CERT="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/fullchain.pem" \
-  -e TLS_KEY="/etc/letsencrypt/live/ftp.esro.wecodeforgood.com/privkey.pem" \
+  -e ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
   delfer/alpine-ftp-server
 
 sleep 10
