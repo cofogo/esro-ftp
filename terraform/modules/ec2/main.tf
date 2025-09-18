@@ -101,19 +101,14 @@ resource "aws_iam_instance_profile" "ftp_server_profile" {
   role = aws_iam_role.ftp_server_role.name
 }
 
-# Get latest Amazon Linux 2023 AMI (newer kernel with pidfd_open support)
+# Get latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 }
 
@@ -141,7 +136,7 @@ resource "aws_instance" "ftp_server" {
 
   root_block_device {
     volume_type           = "gp3"
-    volume_size           = 30
+    volume_size           = 10
     encrypted             = true
     delete_on_termination = true
   }
