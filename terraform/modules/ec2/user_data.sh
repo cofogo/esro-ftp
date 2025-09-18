@@ -19,13 +19,13 @@ for i in {1..10}; do
   fi
 done
 
-yum install -y docker unzip wget curl awscli python3-pip inotify-tools
+yum install -y docker unzip wget curl awscli
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user || true
 
 # Install openssl for self-signed certificates
-dnf install -y openssl
+yum install -y openssl
 
 # --- Debug: variables ---
 echo "[$(date -Is)] FTP Username: ${ftp_username}"   >> /var/log/ftp-setup.log
