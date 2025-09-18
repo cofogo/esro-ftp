@@ -28,16 +28,6 @@ output "ftp_endpoint" {
   value       = "ftp://${aws_instance.ftp_server.public_ip}:21"
 }
 
-output "ftp_domain_endpoint" {
-  description = "FTP server domain endpoint (if DNS record is created)"
-  value       = var.route53_zone_name != "" ? "ftp://${var.ftp_domain}:21" : "DNS record not created - no zone name provided"
-}
-
-output "dns_record_created" {
-  description = "Whether DNS record was created (automatic based on route53_zone_name)"
-  value       = var.route53_zone_name != ""
-}
-
 output "ssh_command" {
   description = "SSH command to connect to the instance"
   value       = "ssh -i /path/to/your/key.pem ec2-user@${aws_instance.ftp_server.public_ip}"
