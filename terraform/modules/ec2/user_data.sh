@@ -1,3 +1,5 @@
+#!/bin/bash
+set -Eeuo pipefail
 # Enable logging
 exec > >(tee -a /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting FTPS server with S3 sync..."
@@ -18,7 +20,6 @@ for i in {1..10}; do
 done
 
 yum install -y docker unzip wget curl awscli
-
 systemctl enable docker
 systemctl start docker
 usermod -a -G docker ec2-user || true
@@ -32,23 +33,22 @@ echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 mkdir -p /home/ftpusers/${ftp_username}
 chown -R 1000:1000 /home/ftpusers
 
-# --- Certbot (Amazon Linux 2) ---
-amazon-linux-extras enable epel
-yum clean metadata
-yum install -y certbot
+# --- Run FTPS container (delfer/alpine-ftp-server) ---
+docker rm -f s3-ftp >/dev/null 2>&1 || true
+
+echo "[$(date -Is)] Starting FTPS server with self-signed SSL..." | tee -a /var/log/ftp-setup.log
 
 mkdir -p /etc/letsencrypt
-
-echo "[$(date -Is)] Requesting Let's Encrypt certificate..." | tee -a /var/log/ftp-setup.log
-certbot certonly --standalone \
-  --preferred-challenges http \
-  -n --agree-tos \
-  --email tech@wecodeforgood.com \
-  -d ftp.esro.wecodeforgood.com
-
-# --- Run FTPS container ---
-docker rm -f ftp >/dev/null 2>&1 || true
-
+docker run --rm \
+    -p 80:80 \
+    -v "/etc/letsencrypt:/etc/letsencrypt" \
+    certbot/certbot certonly \
+    --standalone \
+    --preferred-challenges http \
+    -n --agree-tos \
+    --email tech@wecodeforgood.com \
+    -d ftp.esro.wecodeforgood.com
+    
 docker run -d \
     --name ftp \
     -p "21:21" \
@@ -64,8 +64,9 @@ sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 ftp | tee -a /var/log/ftp-setup.log
 
-# --- Background sync to S3 (systemd unit) ---
-cat >/usr/local/bin/s3-sync.sh <<EOF
+
+# --- Background sync to S3 ---
+cat >/usr/local/bin/s3-sync.sh <<'EOF'
 #!/bin/bash
 while true; do
   aws s3 sync /home/ftpusers/${ftp_username} s3://${s3_bucket_name}/ \
@@ -77,24 +78,6 @@ done
 EOF
 chmod +x /usr/local/bin/s3-sync.sh
 
-cat >/etc/systemd/system/s3-sync.service <<EOF
-[Unit]
-Description=Sync FTP uploads to S3
-After=docker.service
-
-[Service]
-ExecStart=/usr/local/bin/s3-sync.sh
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl enable --now s3-sync
-
-# --- Certbot auto-renew ---
-cat >/etc/cron.d/certbot-renew <<EOF
-0 3 * * * root certbot renew --quiet --deploy-hook "docker restart ftp"
-EOF
+nohup /usr/local/bin/s3-sync.sh >> /var/log/ftp-sync.log 2>&1 &
 
 echo "FTPS server with S3 sync started successfully!" | tee -a /var/log/ftp-setup.log
