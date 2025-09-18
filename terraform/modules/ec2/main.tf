@@ -170,7 +170,7 @@ data "aws_route53_zone" "domain" {
 # FOR NOW HERE, SHOULD BE REMOVED
 resource "aws_route53_record" "esro" {
   zone_id = data.aws_route53_zone.domain[0].zone_id
-  name    = "esro"
+  name    = ""
   type    = "CNAME"
   ttl     = 60
   records = ["codeforgood-alb-1825545045.eu-central-1.elb.amazonaws.com"]
