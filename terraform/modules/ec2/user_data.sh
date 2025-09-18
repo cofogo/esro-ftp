@@ -33,7 +33,7 @@ echo "[$(date -Is)] S3 Bucket:    ${s3_bucket_name}" >> /var/log/ftp-setup.log
 echo "[$(date -Is)] AWS Region:   ${aws_region}"     >> /var/log/ftp-setup.log
 
 # --- Obtain self-signed SSL certificate ---
-DOMAIN="${ftp_domain}"
+DOMAIN="$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) "
 echo "[$(date -Is)] FTP Domain: $DOMAIN" >> /var/log/ftp-setup.log
 
 # Always generate self-signed certificate for the provided domain
@@ -101,7 +101,7 @@ docker run -d \
   -p 990:990 \
   -p 21000-21010:21000-21010 \
   -e USERS="${ftp_username}|${ftp_password}" \
-  -e ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) \
+  -e ADDRESS="$ADDRESS" \
   -e TLS_CERT="$TLS_CERT" \
   -e TLS_KEY="$TLS_KEY" \
   delfer/alpine-ftp-server
