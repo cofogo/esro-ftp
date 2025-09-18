@@ -162,14 +162,19 @@ resource "aws_eip" "ftp_server" {
 
   depends_on = [aws_instance.ftp_server]
 }
-
-# Data source to get the existing Route53 hosted zone
 data "aws_route53_zone" "domain" {
   count = var.route53_zone_name != "" ? 1 : 0
   name  = var.route53_zone_name
 }
 
-# Create DNS A record pointing to the Elastic IP
+# FOR NOW HERE, SHOULD BE REMOVED
+resource "aws_route53_record" "esro" {
+  zone_id = data.aws_route53_zone.domain[0].zone_id
+  name    = "esro"
+  type    = "CNAME"
+  ttl     = 60
+  records = ["codeforgood-alb-1825545045.eu-central-1.elb.amazonaws.com"]
+}
 resource "aws_route53_record" "ftp_server" {
   count   = var.route53_zone_name != "" ? 1 : 0
   zone_id = data.aws_route53_zone.domain[0].zone_id
@@ -181,7 +186,6 @@ resource "aws_route53_record" "ftp_server" {
   depends_on = [aws_eip.ftp_server]
 
   lifecycle {
-    # Prevent accidental deletion of DNS record
     prevent_destroy = false
   }
 }
