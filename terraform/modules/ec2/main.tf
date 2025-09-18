@@ -166,14 +166,16 @@ data "aws_route53_zone" "domain" {
   count = var.route53_zone_name != "" ? 1 : 0
   name  = var.route53_zone_name
 }
-
 # FOR NOW HERE, SHOULD BE REMOVED
-resource "aws_route53_record" "esro" {
-  zone_id = data.aws_route53_zone.domain[0].zone_id
+resource "aws_route53_record" "esro_apex_a" {
+  zone_id = data.aws_route53_zone.esro.zone_id
   name    = ""
-  type    = "CNAME"
-  ttl     = 60
-  records = ["codeforgood-alb-1825545045.eu-central-1.elb.amazonaws.com"]
+  type    = "A"
+  alias {
+    name                   = "codeforgood-alb-1825545045.eu-central-1.elb.amazonaws.com"
+    zone_id                = data.aws_route53_zone.domain[0].zone_id
+    evaluate_target_health = false
+  }
 }
 resource "aws_route53_record" "ftp_server" {
   count   = var.route53_zone_name != "" ? 1 : 0
