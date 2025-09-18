@@ -76,9 +76,20 @@ rm -f /tmp/cert.conf
 
 if [ -f "/etc/ssl/certs/$DOMAIN.crt" ] && [ -f "/etc/ssl/private/$DOMAIN.key" ]; then
   echo "[$(date -Is)] Self-signed SSL certificate generated successfully" | tee -a /var/log/ftp-setup.log
+  
+  # Ensure proper permissions for certificates
+  chmod 644 /etc/ssl/certs/$DOMAIN.crt
+  chmod 600 /etc/ssl/private/$DOMAIN.key
+  
+  # Set paths as they will appear inside the container (mounted volume)
   TLS_CERT="/etc/ssl/certs/$DOMAIN.crt"
   TLS_KEY="/etc/ssl/private/$DOMAIN.key"
   ADDRESS=$DOMAIN
+  
+  # Debug: Show certificate info
+  echo "[$(date -Is)] Certificate file: $TLS_CERT" | tee -a /var/log/ftp-setup.log
+  echo "[$(date -Is)] Key file: $TLS_KEY" | tee -a /var/log/ftp-setup.log
+  ls -la /etc/ssl/certs/$DOMAIN.crt /etc/ssl/private/$DOMAIN.key | tee -a /var/log/ftp-setup.log
 else
   echo "[$(date -Is)] SSL certificate generation failed" | tee -a /var/log/ftp-setup.log
   exit 1
@@ -100,14 +111,26 @@ docker run -d \
   -p 21:21 \
   -p 21000-21010:21000-21010 \
   -e USERS="${ftp_username}|${ftp_password}" \
-  -e ADDRESS=$ADDRESS \
+  -e ADDRESS="$ADDRESS" \
   -e TLS_CERT="$TLS_CERT" \
   -e TLS_KEY="$TLS_KEY" \
+  -e MIN_PORT=21000 \
+  -e MAX_PORT=21010 \
   delfer/alpine-ftp-server
 
 sleep 10
 docker ps | tee -a /var/log/ftp-setup.log
 docker logs --tail 20 s3-ftp | tee -a /var/log/ftp-setup.log
+
+# Wait a bit more and check if the container is still running
+sleep 10
+if docker ps | grep -q s3-ftp; then
+  echo "[$(date -Is)] FTPS container is running successfully" | tee -a /var/log/ftp-setup.log
+else
+  echo "[$(date -Is)] FTPS container failed to start or exited" | tee -a /var/log/ftp-setup.log
+  docker logs s3-ftp | tee -a /var/log/ftp-setup.log
+  exit 1
+fi
 
 
 # --- Background sync to S3 ---
