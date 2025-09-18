@@ -34,7 +34,7 @@ chown -R 1000:1000 /home/ftpusers
 
 # --- Certbot (Amazon Linux 2) ---
 amazon-linux-extras enable epel
-yum install -y epel-release
+yum clean metadata
 yum install -y certbot
 
 mkdir -p /etc/letsencrypt
