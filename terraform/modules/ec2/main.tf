@@ -20,13 +20,7 @@ resource "aws_security_group" "ftp_server" {
     cidr_blocks = var.allowed_cidr_blocks
   }
 
-  # HTTP port for Let's Encrypt certificate validation
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
 
   # FTPS implicit SSL port
   ingress {
