@@ -59,9 +59,3 @@ variable "aws_secret_access_key" {
   sensitive   = true
 }
 
-variable "route53_zone_name" {
-  description = "Route53 hosted zone name (e.g., 'example.com') - if provided, DNS record will be created automatically"
-  type        = string
-  default     = ""
-}
-

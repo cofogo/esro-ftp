@@ -162,32 +162,3 @@ resource "aws_eip" "ftp_server" {
 
   depends_on = [aws_instance.ftp_server]
 }
-data "aws_route53_zone" "domain" {
-  count = var.route53_zone_name != "" ? 1 : 0
-  name  = var.route53_zone_name
-}
-# FOR NOW HERE, SHOULD BE REMOVED
-resource "aws_route53_record" "esro_apex_a" {
-  zone_id = "Z215JYRZR1TBD5"
-  name    = ""
-  type    = "A"
-  alias {
-    name                   = "codeforgood-alb-1825545045.eu-central-1.elb.amazonaws.com"
-    zone_id                = data.aws_route53_zone.domain[0].zone_id
-    evaluate_target_health = false
-  }
-}
-resource "aws_route53_record" "ftp_server" {
-  count   = var.route53_zone_name != "" ? 1 : 0
-  zone_id = data.aws_route53_zone.domain[0].zone_id
-  name    = var.ftp_domain
-  type    = "A"
-  ttl     = 300
-  records = [aws_eip.ftp_server.public_ip]
-
-  depends_on = [aws_eip.ftp_server]
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}

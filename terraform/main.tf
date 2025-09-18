@@ -70,9 +70,6 @@ module "ec2" {
   allowed_cidr_blocks   = var.ftp_allowed_cidr_blocks
   aws_access_key_id     = var.aws_access_key_id
   aws_secret_access_key = var.aws_secret_access_key
-
-  # DNS Configuration - automatically creates DNS record if zone name is provided
-  route53_zone_name = var.route53_zone_name
 }
 
 # AWS Secrets Manager secret for S3 configuration
